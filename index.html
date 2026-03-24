@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSTR Options Chain — Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --denim:      #0B1833;
+    --space:      #2C3A51;
+    --steel:      #BFC7DA;
+    --rust:       #C4581A;
+    --rust-glow:  #E8935A;
+    --rust-light: rgba(196,88,26,0.12);
+    --white:      #F8FAFC;
+    --gray:       #94A3B8;
+    --gray-dark:  #475569;
+    --success:    #10B981;
+    --warning:    #F59E0B;
+    --error:      #EF4444;
+    --info:       #3B82F6;
+    --border:     rgba(191,199,218,0.08);
+    --border-med: rgba(191,199,218,0.15);
+    --mono:       'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+    --sans:       'Aptos', Calibri, 'Segoe UI', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--denim); color:var(--white);
+    font-family:var(--sans); min-height:100vh; font-size:0.95rem;
+  }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:radial-gradient(circle, rgba(191,199,218,0.06) 1px, transparent 1px);
+    background-size:28px 28px; pointer-events:none; z-index:0;
+  }
+  .container { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2rem; }
+
+  /* Header */
+  header {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    margin-bottom:2rem; flex-wrap:wrap; gap:1rem;
+    padding-bottom:1.5rem; border-bottom:1px solid var(--border);
+  }
+  .eyebrow { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.25em; color:var(--rust); margin-bottom:0.4rem; }
+  .page-title { font-size:2.5rem; font-weight:700; color:var(--white); line-height:1.1; letter-spacing:-0.5px; }
+  .page-sub { font-size:0.85rem; color:var(--steel); margin-top:0.4rem; }
+  .price-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); margin-bottom:0.25rem; }
+  .live-price { font-family:var(--mono); font-size:2.2rem; font-weight:700; color:var(--white); line-height:1; }
+  .price-change { font-family:var(--mono); font-size:0.82rem; margin-top:0.3rem; }
+  .price-change.up   { color:var(--success); }
+  .price-change.down { color:var(--error); }
+
+  /* Card */
+  .card { background:var(--space); border:1px solid var(--border); border-radius:12px; padding:1.5rem; }
+
+  /* Controls */
+  .controls { display:flex; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .cg { display:flex; flex-direction:column; gap:0.4rem; }
+  .cg label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); }
+  input[type="date"], select {
+    background:var(--denim); border:1px solid var(--border-med);
+    color:var(--white); font-family:var(--mono); font-size:0.82rem;
+    padding:0.6rem 0.85rem; border-radius:8px; outline:none;
+    transition:border-color 0.2s; cursor:pointer; min-width:190px;
+  }
+  input[type="date"]:focus, select:focus { border-color:var(--rust); }
+  select option { background:var(--denim); }
+
+  .btn {
+    padding:0.65rem 1.6rem; background:var(--rust); border:none;
+    border-radius:8px; color:var(--white); font-family:var(--sans);
+    font-size:0.88rem; font-weight:700; cursor:pointer;
+    transition:all 0.2s; white-space:nowrap;
+  }
+  .btn:hover { background:var(--rust-glow); transform:translateY(-1px); box-shadow:0 8px 25px rgba(196,88,26,0.3); }
+  .btn:active { transform:translateY(0); }
+  .btn.outline { background:transparent; border:1px solid var(--rust); color:var(--rust-glow); }
+  .btn.outline:hover { background:var(--rust-light); }
+
+  /* Status */
+  .status-bar { display:flex; align-items:center; gap:0.7rem; font-size:0.72rem; color:var(--steel); font-family:var(--mono); }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--gray-dark); flex-shrink:0; }
+  .dot.live  { background:var(--success); box-shadow:0 0 8px var(--success); animation:pulse 2s infinite; }
+  .dot.error { background:var(--error); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  /* Stats */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:0.75rem; margin-bottom:1.5rem; }
+  .stat { background:var(--space); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1.1rem; }
+  .stat-lbl { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); margin-bottom:0.3rem; }
+  .stat-val { font-family:var(--mono); font-size:1.2rem; font-weight:700; color:var(--white); }
+  .stat-val.g { color:var(--success); } .stat-val.r { color:var(--error); }
+  .stat-val.b { color:var(--info); }    .stat-val.y { color:var(--warning); }
+  .stat-val.o { color:var(--rust-glow); }
+
+  /* Filters */
+  .filter-row { display:flex; gap:0.7rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .flbl { font-size:0.65rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.15em; }
+  input[type=range] { accent-color:var(--rust); width:100px; }
+  .rval { font-family:var(--mono); font-size:0.78rem; color:var(--rust-glow); min-width:28px; }
+  .chip {
+    padding:0.28rem 0.8rem; border-radius:20px; border:1px solid var(--border-med);
+    background:transparent; color:var(--steel); font-size:0.72rem; font-family:var(--sans);
+    cursor:pointer; transition:all 0.15s;
+  }
+  .chip.on { background:var(--rust-light); border-color:rgba(196,88,26,0.4); color:var(--rust-glow); font-weight:600; }
+  .chip:hover:not(.on) { color:var(--white); }
+
+  /* Chain */
+  .chain-wrap { background:var(--space); border:1px solid var(--border); border-radius:12px; overflow:hidden; overflow-x:auto; }
+  .sec-labels { display:grid; grid-template-columns:6fr 90px 6fr; border-bottom:1px solid var(--border); }
+  .sec-lbl { padding:0.55rem 1rem; text-align:center; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; }
+  .sec-lbl.c { background:rgba(16,185,129,0.05); color:var(--success); border-right:1px solid var(--border); }
+  .sec-lbl.s { background:var(--rust-light); color:var(--rust-glow); border-right:1px solid var(--border); }
+  .sec-lbl.p { background:rgba(239,68,68,0.05); color:var(--error); }
+
+  .chain-head { display:grid; grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr); background:var(--denim); border-bottom:2px solid var(--border); min-width:900px; }
+  .ch { padding:0.5rem 0.4rem; text-align:center; font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--gray-dark); border-right:1px solid var(--border); }
+  .ch:last-child { border-right:none; }
+  .ch.cc { color:rgba(16,185,129,0.65); } .ch.pc { color:rgba(239,68,68,0.65); }
+  .ch.sc { color:var(--rust); background:var(--rust-light); }
+
+  .chain-row { display:grid; grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr); border-bottom:1px solid rgba(191,199,218,0.04); transition:background 0.1s; min-width:900px; }
+  .chain-row:last-child { border-bottom:none; }
+  .chain-row:hover { background:rgba(191,199,218,0.025); }
+  .chain-row.ic { background:rgba(16,185,129,0.04); }
+  .chain-row.ip { background:rgba(239,68,68,0.04); }
+  .chain-row.atm { background:rgba(196,88,26,0.07); border-top:1px solid rgba(196,88,26,0.2); border-bottom:1px solid rgba(196,88,26,0.2); }
+
+  .cell { padding:0.55rem 0.4rem; text-align:center; font-family:var(--mono); font-size:0.73rem; color:var(--steel); border-right:1px solid rgba(191,199,218,0.04); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cell:last-child { border-right:none; }
+  .cell.sk { background:var(--rust-light); color:var(--rust-glow); font-weight:700; font-size:0.78rem; border-left:1px solid rgba(196,88,26,0.18); border-right:1px solid rgba(196,88,26,0.18); }
+  .cell.sk.atm-s { background:rgba(196,88,26,0.18); color:var(--white); }
+  .atm-b { font-size:0.5rem; background:var(--rust); color:var(--white); padding:1px 4px; border-radius:3px; margin-left:3px; vertical-align:middle; }
+  .cell.bid { color:var(--gray); } .cell.ask { color:var(--white); }
+  .cell.iv  { color:var(--info); } .cell.dl  { color:#c8aaff; }
+  .cell.oi  { color:var(--gray-dark); font-size:0.65rem; }
+  .cell.mu  { color:var(--gray-dark); }
+
+  /* States */
+  .empty { padding:5rem 2rem; text-align:center; }
+  .empty .ico { font-size:2.5rem; margin-bottom:1rem; opacity:0.35; }
+  .empty p { font-size:0.88rem; color:var(--steel); line-height:1.7; }
+  .loading { display:flex; align-items:center; justify-content:center; gap:0.75rem; padding:4rem; color:var(--steel); font-family:var(--mono); font-size:0.82rem; }
+  .spin { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--rust); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  footer { text-align:center; padding:2rem 0; border-top:1px solid var(--border); color:var(--gray-dark); font-size:0.72rem; margin-top:3rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <div class="eyebrow">Mission Control &mdash; Options Desk</div>
+      <div class="page-title">MSTR Options Chain</div>
+      <div class="page-sub">Live options data via Tradier &mdash; select an expiration to load the full chain</div>
+    </div>
+    <div style="text-align:right">
+      <div class="price-label">Last Price</div>
+      <div class="live-price" id="livePrice">—</div>
+      <div class="price-change" id="priceChange">Loading...</div>
+    </div>
+  </header>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="controls">
+      <div class="cg">
+        <label>Expiration Date</label>
+        <input type="date" id="expiryDate" onchange="onDateChange()">
+      </div>
+      <div class="cg">
+        <label>Or Pick from List</label>
+        <select id="expirySelect" onchange="onSelectChange()">
+          <option value="">— select expiry —</option>
+        </select>
+      </div>
+      <button class="btn" onclick="loadChain()">Load Chain</button>
+      <button class="btn outline" onclick="loadExpirations()">↻ Get Dates</button>
+      <button class="btn outline" id="refreshBtn" onclick="loadChain()" style="display:none">↻ Refresh</button>
+    </div>
+    <div class="status-bar">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Connecting to Tradier...</span>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsBar" style="display:none">
+    <div class="stat"><div class="stat-lbl">MSTR Price</div><div class="stat-val o" id="sPrice">—</div></div>
+    <div class="stat"><div class="stat-lbl">Expiry</div><div class="stat-val" id="sExpiry" style="font-size:0.9rem">—</div></div>
+    <div class="stat"><div class="stat-lbl">DTE</div><div class="stat-val b" id="sDTE">—</div></div>
+    <div class="stat"><div class="stat-lbl">Call OI</div><div class="stat-val g" id="sCallOI">—</div></div>
+    <div class="stat"><div class="stat-lbl">Put OI</div><div class="stat-val r" id="sPutOI">—</div></div>
+    <div class="stat"><div class="stat-lbl">P/C Ratio</div><div class="stat-val" id="sPCR">—</div></div>
+    <div class="stat"><div class="stat-lbl">ATM IV</div><div class="stat-val b" id="sIV">—</div></div>
+    <div class="stat"><div class="stat-lbl">Contracts</div><div class="stat-val" id="sCnt">—</div></div>
+  </div>
+
+  <div class="filter-row" id="filterRow" style="display:none">
+    <span class="flbl">Strikes ±</span>
+    <input type="range" id="strikeRange" min="5" max="50" value="15" oninput="applyFilters()">
+    <span class="rval" id="rangeVal">15</span>
+    <div style="width:1px;height:18px;background:var(--border);margin:0 0.2rem"></div>
+    <button class="chip on" id="tCalls" onclick="toggleCalls()">Calls</button>
+    <button class="chip on" id="tPuts"  onclick="togglePuts()">Puts</button>
+    <button class="chip"    id="tITM"   onclick="toggleITM()">ITM Only</button>
+    <button class="chip"    id="tOTM"   onclick="toggleOTM()">OTM Only</button>
+  </div>
+
+  <div class="chain-wrap" id="chainWrap">
+    <div class="empty">
+      <div class="ico">📊</div>
+      <p>Select an expiration date and click <strong>Load Chain</strong><br>to view live MSTR options data.</p>
+    </div>
+  </div>
+
+  <footer>Six Peak Capital &nbsp;&middot;&nbsp; LV Construction &nbsp;&middot;&nbsp; Mission Control &nbsp;&middot;&nbsp; Options Desk</footer>
+</div>
+
+<script>
+const TOKEN   = "NmVn72M4E7bi6xCUiS95uKn88Jrs";
+const BASE    = "https://api.tradier.com/v1";
+let chain     = [];
+let undly     = 0;
+let sCalls=true, sPuts=true, sITM=false, sOTM=false;
+
+const fmt  = (v,d=2) => (v!=null&&!isNaN(v)) ? parseFloat(v).toFixed(d) : '—';
+const fmtK = v => (v!=null&&!isNaN(v)) ? parseInt(v).toLocaleString() : '—';
+const pct  = v => (v!=null&&!isNaN(v)) ? (parseFloat(v)*100).toFixed(1)+'%' : '—';
+
+function setStatus(type, msg) {
+  document.getElementById('statusDot').className = 'dot'+(type?' '+type:'');
+  document.getElementById('statusText').textContent = msg;
+}
+
+async function api(path, params={}) {
+  const url = new URL(`${BASE}${path}`);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  const r = await fetch(url, { headers:{ Authorization:`Bearer ${TOKEN}`, Accept:'application/json' } });
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  return r.json();
+}
+
+async function fetchPrice() {
+  try {
+    const d = await api('/markets/quotes', {symbols:'MSTR'});
+    const q = d?.quotes?.quote;
+    if (!q) return;
+    undly = parseFloat(q.last)||0;
+    const chg = parseFloat(q.change)||0;
+    const pct2 = parseFloat(q.change_percentage)||0;
+    document.getElementById('livePrice').textContent = `$${undly.toFixed(2)}`;
+    const el = document.getElementById('priceChange');
+    el.textContent = `${chg>=0?'+':''}${chg.toFixed(2)}  (${pct2.toFixed(2)}%)`;
+    el.className = 'price-change '+(chg>=0?'up':'down');
+  } catch(e) { console.warn(e); }
+}
+
+async function loadExpirations() {
+  setStatus('','Loading expiration dates...');
+  try {
+    const d = await api('/markets/options/expirations', {symbol:'MSTR', includeAllRoots:'true'});
+    const dates = d?.expirations?.date || [];
+    const sel = document.getElementById('expirySelect');
+    sel.innerHTML = '<option value="">— select expiry —</option>';
+    dates.forEach(dt => {
+      const dte = Math.round((new Date(dt)-new Date())/86400000);
+      const o = document.createElement('option');
+      o.value=dt; o.textContent=`${dt}  (${dte}d)`; sel.appendChild(o);
+    });
+    setStatus('live', `Ready — ${dates.length} expirations loaded.`);
+  } catch(e) { setStatus('error',`Failed: ${e.message}`); }
+}
+
+async function loadChain() {
+  const expiry = document.getElementById('expiryDate').value
+               || document.getElementById('expirySelect').value;
+  if (!expiry) { alert('Select an expiration date first.'); return; }
+
+  setStatus('',`Loading chain for ${expiry}...`);
+  document.getElementById('chainWrap').innerHTML =
+    '<div class="loading"><div class="spin"></div>Fetching MSTR options from Tradier...</div>';
+
+  try {
+    await fetchPrice();
+    const d = await api('/markets/options/chains', {symbol:'MSTR', expiration:expiry, greeks:'true'});
+    const opts = d?.options?.option || [];
+
+    if (!opts.length) {
+      document.getElementById('chainWrap').innerHTML =
+        '<div class="empty"><div class="ico">🔍</div><p>No options found for this date.<br>Try a different expiration.</p></div>';
+      setStatus('error','No contracts returned.'); return;
+    }
+
+    chain = opts;
+    renderChain(opts, expiry);
+    updateStats(opts, expiry);
+    document.getElementById('statsBar').style.display   = 'grid';
+    document.getElementById('filterRow').style.display  = 'flex';
+    document.getElementById('refreshBtn').style.display = '';
+    setStatus('live',`${opts.length} contracts — ${expiry} — updated ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    setStatus('error', e.message);
+    document.getElementById('chainWrap').innerHTML =
+      `<div class="empty"><div class="ico">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+function renderChain(opts, expiry) {
+  const strikes = [...new Set(opts.map(o=>o.strike))].sort((a,b)=>a-b);
+  const cMap = Object.fromEntries(opts.filter(o=>o.option_type==='call').map(o=>[o.strike,o]));
+  const pMap = Object.fromEntries(opts.filter(o=>o.option_type==='put').map(o=>[o.strike,o]));
+
+  const n = parseInt(document.getElementById('strikeRange').value);
+  document.getElementById('rangeVal').textContent = n;
+
+  const atm = strikes.reduce((a,b)=>Math.abs(b-undly)<Math.abs(a-undly)?b:a);
+  const ai  = strikes.indexOf(atm);
+  let vis = strikes.slice(Math.max(0,ai-n), ai+n+1);
+  if (sITM) vis = vis.filter(s=>s<undly);
+  if (sOTM) vis = vis.filter(s=>s>undly);
+
+  let html = `
+    <div class="sec-labels">
+      <div class="sec-lbl c">Calls</div>
+      <div class="sec-lbl s">Strike</div>
+      <div class="sec-lbl p">Puts</div>
+    </div>
+    <div class="chain-head">
+      <div class="ch cc">Bid</div><div class="ch cc">Ask</div><div class="ch cc">Last</div>
+      <div class="ch cc">IV</div><div class="ch cc">Delta</div><div class="ch cc">OI / Vol</div>
+      <div class="ch sc">Strike</div>
+      <div class="ch pc">OI / Vol</div><div class="ch pc">Delta</div><div class="ch pc">IV</div>
+      <div class="ch pc">Last</div><div class="ch pc">Ask</div><div class="ch pc">Bid</div>
+    </div>`;
+
+  vis.forEach(sk => {
+    const c = cMap[sk], p = pMap[sk];
+    const isATM = sk===atm, isIC = undly>sk, isIP = undly<sk;
+    let rc = 'chain-row';
+    if (isATM) rc+=' atm'; else if (isIC) rc+=' ic'; else if (isIP) rc+=' ip';
+
+    const sLabel = isATM ? `$${sk}<span class="atm-b">ATM</span>` : `$${sk}`;
+
+    const cHTML = sCalls&&c ? `
+      <div class="cell bid">${fmt(c.bid)}</div>
+      <div class="cell ask">${fmt(c.ask)}</div>
+      <div class="cell">${fmt(c.last)}</div>
+      <div class="cell iv">${pct(c.greeks?.mid_iv)}</div>
+      <div class="cell dl">${fmt(c.greeks?.delta,3)}</div>
+      <div class="cell oi">${fmtK(c.open_interest)}/${fmtK(c.volume)}</div>
+    ` : '<div class="cell mu">—</div>'.repeat(6);
+
+    const pHTML = sPuts&&p ? `
+      <div class="cell oi">${fmtK(p.open_interest)}/${fmtK(p.volume)}</div>
+      <div class="cell dl">${fmt(p.greeks?.delta,3)}</div>
+      <div class="cell iv">${pct(p.greeks?.mid_iv)}</div>
+      <div class="cell">${fmt(p.last)}</div>
+      <div class="cell ask">${fmt(p.ask)}</div>
+      <div class="cell bid">${fmt(p.bid)}</div>
+    ` : '<div class="cell mu">—</div>'.repeat(6);
+
+    html += `<div class="${rc}">${cHTML}<div class="cell sk ${isATM?'atm-s':''}">${sLabel}</div>${pHTML}</div>`;
+  });
+
+  document.getElementById('chainWrap').innerHTML = html;
+}
+
+function updateStats(opts, expiry) {
+  const calls  = opts.filter(o=>o.option_type==='call');
+  const puts   = opts.filter(o=>o.option_type==='put');
+  const callOI = calls.reduce((s,o)=>s+(parseInt(o.open_interest)||0),0);
+  const putOI  = puts.reduce( (s,o)=>s+(parseInt(o.open_interest)||0),0);
+  const dte    = Math.round((new Date(expiry)-new Date())/86400000);
+  const strikes= [...new Set(opts.map(o=>o.strike))].sort((a,b)=>a-b);
+  const atm    = strikes.reduce((a,b)=>Math.abs(b-undly)<Math.abs(a-undly)?b:a);
+  const atmC   = calls.find(c=>c.strike===atm);
+  const atmIV  = atmC?.greeks?.mid_iv ? (parseFloat(atmC.greeks.mid_iv)*100).toFixed(1)+'%':'—';
+
+  document.getElementById('sPrice').textContent  = `$${undly.toFixed(2)}`;
+  document.getElementById('sExpiry').textContent = expiry;
+  document.getElementById('sDTE').textContent    = `${dte}d`;
+  document.getElementById('sCallOI').textContent = callOI.toLocaleString();
+  document.getElementById('sPutOI').textContent  = putOI.toLocaleString();
+  document.getElementById('sPCR').textContent    = callOI>0?(putOI/callOI).toFixed(2):'—';
+  document.getElementById('sIV').textContent     = atmIV;
+  document.getElementById('sCnt').textContent    = opts.length.toLocaleString();
+}
+
+function applyFilters() {
+  if (!chain.length) return;
+  const expiry = document.getElementById('expiryDate').value
+               || document.getElementById('expirySelect').value;
+  renderChain(chain, expiry);
+}
+function toggleCalls(){ sCalls=!sCalls; document.getElementById('tCalls').className='chip'+(sCalls?' on':''); applyFilters(); }
+function togglePuts() { sPuts =!sPuts;  document.getElementById('tPuts').className ='chip'+(sPuts ?' on':''); applyFilters(); }
+function toggleITM()  { sITM=!sITM; sOTM=false; document.getElementById('tITM').className='chip'+(sITM?' on':''); document.getElementById('tOTM').className='chip'; applyFilters(); }
+function toggleOTM()  { sOTM=!sOTM; sITM=false; document.getElementById('tOTM').className='chip'+(sOTM?' on':''); document.getElementById('tITM').className='chip'; applyFilters(); }
+function onDateChange()   { document.getElementById('expirySelect').value=''; }
+function onSelectChange() { document.getElementById('expiryDate').value=''; }
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('expiryDate').valueAsDate = new Date();
+  fetchPrice();
+  loadExpirations();
+});
+</script>
+</body>
+</html>
