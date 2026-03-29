@@ -3,411 +3,1543 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MSTR Options Chain — Mission Control</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<title>MSTR Options Desk — Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --denim:      #0B1833;
-    --space:      #2C3A51;
-    --steel:      #BFC7DA;
-    --rust:       #C4581A;
-    --rust-glow:  #E8935A;
-    --rust-light: rgba(196,88,26,0.12);
-    --white:      #F8FAFC;
-    --gray:       #94A3B8;
-    --gray-dark:  #475569;
-    --success:    #10B981;
-    --warning:    #F59E0B;
-    --error:      #EF4444;
-    --info:       #3B82F6;
-    --border:     rgba(191,199,218,0.08);
-    --border-med: rgba(191,199,218,0.15);
-    --mono:       'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-    --sans:       'Aptos', Calibri, 'Segoe UI', sans-serif;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background:var(--denim); color:var(--white);
-    font-family:var(--sans); min-height:100vh; font-size:0.95rem;
-  }
-  body::before {
-    content:''; position:fixed; inset:0;
-    background-image:radial-gradient(circle, rgba(191,199,218,0.06) 1px, transparent 1px);
-    background-size:28px 28px; pointer-events:none; z-index:0;
-  }
-  .container { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2rem; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--surface3:#22222f;
+--border:#2a2a3a;--border2:#3a3a4a;
+--text:#e8e8f0;--text2:#a0a0b0;--text3:#606070;
+--gold:#ffd700;--green:#00e676;--red:#ff5252;--blue:#448aff;
+--orange:#ff9100;--purple:#b388ff;--cyan:#00e5ff;
+--font-mono:'JetBrains Mono',monospace;--font-sans:'Aptos','Aptos Display','Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:14px;line-height:1.5;overflow-x:hidden}
+.app{max-width:1440px;margin:0 auto;padding:16px}
 
-  /* Header */
-  header {
-    display:flex; align-items:flex-start; justify-content:space-between;
-    margin-bottom:2rem; flex-wrap:wrap; gap:1rem;
-    padding-bottom:1.5rem; border-bottom:1px solid var(--border);
-  }
-  .eyebrow { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.25em; color:var(--rust); margin-bottom:0.4rem; }
-  .page-title { font-size:2.5rem; font-weight:700; color:var(--white); line-height:1.1; letter-spacing:-0.5px; }
-  .page-sub { font-size:0.85rem; color:var(--steel); margin-top:0.4rem; }
-  .price-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); margin-bottom:0.25rem; }
-  .live-price { font-family:var(--mono); font-size:2.2rem; font-weight:700; color:var(--white); line-height:1; }
-  .price-change { font-family:var(--mono); font-size:0.82rem; margin-top:0.3rem; }
-  .price-change.up   { color:var(--success); }
-  .price-change.down { color:var(--error); }
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.header h1{font-family:var(--font-mono);font-size:18px;font-weight:600;color:var(--gold);letter-spacing:1px}
+.header .subtitle{font-size:12px;color:var(--text3);margin-top:2px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.header-right{display:flex;align-items:center;gap:16px}
+.header-time{font-family:var(--font-mono);font-size:13px;color:var(--text2)}
 
-  /* Card */
-  .card { background:var(--space); border:1px solid var(--border); border-radius:12px; padding:1.5rem; }
+/* Price Ticker Bar */
+.ticker-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+.ticker{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.ticker::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ticker.btc::before{background:var(--orange)}
+.ticker.mstr::before{background:var(--blue)}
+.ticker.mnav::before{background:var(--gold)}
+.ticker.iv::before{background:var(--purple)}
+.ticker.prem::before{background:var(--green)}
+.ticker.margin::before{background:var(--red)}
+.ticker-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.ticker-value{font-family:var(--font-mono);font-size:20px;font-weight:600}
+.ticker-change{font-family:var(--font-mono);font-size:11px;margin-top:2px}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--text3)}
 
-  /* Controls */
-  .controls { display:flex; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .cg { display:flex; flex-direction:column; gap:0.4rem; }
-  .cg label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); }
-  input[type="date"], select {
-    background:var(--denim); border:1px solid var(--border-med);
-    color:var(--white); font-family:var(--mono); font-size:0.82rem;
-    padding:0.6rem 0.85rem; border-radius:8px; outline:none;
-    transition:border-color 0.2s; cursor:pointer; min-width:190px;
-  }
-  input[type="date"]:focus, select:focus { border-color:var(--rust); }
-  select option { background:var(--denim); }
+/* Grid Layout */
+.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;min-height:200px}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.panel-title{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+.panel-badge{font-size:10px;padding:3px 8px;border-radius:4px;font-family:var(--font-mono);font-weight:500}
+.badge-live{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.badge-manual{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2)}
 
-  .btn {
-    padding:0.65rem 1.6rem; background:var(--rust); border:none;
-    border-radius:8px; color:var(--white); font-family:var(--sans);
-    font-size:0.88rem; font-weight:700; cursor:pointer;
-    transition:all 0.2s; white-space:nowrap;
-  }
-  .btn:hover { background:var(--rust-glow); transform:translateY(-1px); box-shadow:0 8px 25px rgba(196,88,26,0.3); }
-  .btn:active { transform:translateY(0); }
-  .btn.outline { background:transparent; border:1px solid var(--rust); color:var(--rust-glow); }
-  .btn.outline:hover { background:var(--rust-light); }
+.full-width{grid-column:1/-1}
 
-  /* Status */
-  .status-bar { display:flex; align-items:center; gap:0.7rem; font-size:0.72rem; color:var(--steel); font-family:var(--mono); }
-  .dot { width:7px; height:7px; border-radius:50%; background:var(--gray-dark); flex-shrink:0; }
-  .dot.live  { background:var(--success); box-shadow:0 0 8px var(--success); animation:pulse 2s infinite; }
-  .dot.error { background:var(--error); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+/* Tables */
+table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px}
+th{text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border)}
+td{padding:8px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--surface2)}
 
-  /* Stats */
-  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:0.75rem; margin-bottom:1.5rem; }
-  .stat { background:var(--space); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1.1rem; }
-  .stat-lbl { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--rust); margin-bottom:0.3rem; }
-  .stat-val { font-family:var(--mono); font-size:1.2rem; font-weight:700; color:var(--white); }
-  .stat-val.g { color:var(--success); } .stat-val.r { color:var(--error); }
-  .stat-val.b { color:var(--info); }    .stat-val.y { color:var(--warning); }
-  .stat-val.o { color:var(--rust-glow); }
+/* Input forms */
+.input-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.input-group{display:flex;flex-direction:column;gap:3px}
+.input-group label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+input[type="number"],input[type="text"],input[type="date"],select{
+background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:var(--text);font-family:var(--font-mono);font-size:12px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--gold)}
+button{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:6px 14px;color:var(--text);font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all .15s}
+button:hover{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+button.danger{border-color:rgba(255,82,82,.3)}
+button.danger:hover{background:var(--red);border-color:var(--red)}
 
-  /* Filters */
-  .filter-row { display:flex; gap:0.7rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .flbl { font-size:0.65rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.15em; }
-  input[type=range] { accent-color:var(--rust); width:100px; }
-  .rval { font-family:var(--mono); font-size:0.78rem; color:var(--rust-glow); min-width:28px; }
-  .chip {
-    padding:0.28rem 0.8rem; border-radius:20px; border:1px solid var(--border-med);
-    background:transparent; color:var(--steel); font-size:0.72rem; font-family:var(--sans);
-    cursor:pointer; transition:all 0.15s;
-  }
-  .chip.on { background:var(--rust-light); border-color:rgba(196,88,26,0.4); color:var(--rust-glow); font-weight:600; }
-  .chip:hover:not(.on) { color:var(--white); }
+/* Progress bars */
+.progress-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
 
-  /* Chain */
-  .chain-wrap { background:var(--space); border:1px solid var(--border); border-radius:12px; overflow:hidden; overflow-x:auto; }
-  .sec-labels { display:grid; grid-template-columns:6fr 90px 6fr; border-bottom:1px solid var(--border); }
-  .sec-lbl { padding:0.55rem 1rem; text-align:center; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; }
-  .sec-lbl.c { background:rgba(16,185,129,0.05); color:var(--success); border-right:1px solid var(--border); }
-  .sec-lbl.s { background:var(--rust-light); color:var(--rust-glow); border-right:1px solid var(--border); }
-  .sec-lbl.p { background:rgba(239,68,68,0.05); color:var(--error); }
+/* Alerts */
+.alert{padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.alert-warn{background:rgba(255,145,0,.08);border:1px solid rgba(255,145,0,.2);color:var(--orange)}
+.alert-danger{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.alert-info{background:rgba(68,138,255,.08);border:1px solid rgba(68,138,255,.2);color:var(--blue)}
+.alert-success{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--green)}
+.alert-icon{font-size:14px;flex-shrink:0}
 
-  .chain-head { display:grid; grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr); background:var(--denim); border-bottom:2px solid var(--border); min-width:900px; }
-  .ch { padding:0.5rem 0.4rem; text-align:center; font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--gray-dark); border-right:1px solid var(--border); }
-  .ch:last-child { border-right:none; }
-  .ch.cc { color:rgba(16,185,129,0.65); } .ch.pc { color:rgba(239,68,68,0.65); }
-  .ch.sc { color:var(--rust); background:var(--rust-light); }
+/* Scenario chart area */
+.chart-container{position:relative;height:280px;margin-top:10px}
 
-  .chain-row { display:grid; grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr); border-bottom:1px solid rgba(191,199,218,0.04); transition:background 0.1s; min-width:900px; }
-  .chain-row:last-child { border-bottom:none; }
-  .chain-row:hover { background:rgba(191,199,218,0.025); }
-  .chain-row.ic { background:rgba(16,185,129,0.04); }
-  .chain-row.ip { background:rgba(239,68,68,0.04); }
-  .chain-row.atm { background:rgba(196,88,26,0.07); border-top:1px solid rgba(196,88,26,0.2); border-bottom:1px solid rgba(196,88,26,0.2); }
+/* Settings modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h2{font-family:var(--font-mono);font-size:15px;color:var(--gold);margin-bottom:16px}
 
-  .cell { padding:0.55rem 0.4rem; text-align:center; font-family:var(--mono); font-size:0.73rem; color:var(--steel); border-right:1px solid rgba(191,199,218,0.04); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .cell:last-child { border-right:none; }
-  .cell.sk { background:var(--rust-light); color:var(--rust-glow); font-weight:700; font-size:0.78rem; border-left:1px solid rgba(196,88,26,0.18); border-right:1px solid rgba(196,88,26,0.18); }
-  .cell.sk.atm-s { background:rgba(196,88,26,0.18); color:var(--white); }
-  .atm-b { font-size:0.5rem; background:var(--rust); color:var(--white); padding:1px 4px; border-radius:3px; margin-left:3px; vertical-align:middle; }
-  .cell.bid { color:var(--gray); } .cell.ask { color:var(--white); }
-  .cell.iv  { color:var(--info); } .cell.dl  { color:#c8aaff; }
-  .cell.oi  { color:var(--gray-dark); font-size:0.65rem; }
-  .cell.mu  { color:var(--gray-dark); }
+/* Metric cards in panels */
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric{background:var(--surface2);border-radius:6px;padding:10px}
+.metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.metric-value{font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:2px}
 
-  /* States */
-  .empty { padding:5rem 2rem; text-align:center; }
-  .empty .ico { font-size:2.5rem; margin-bottom:1rem; opacity:0.35; }
-  .empty p { font-size:0.88rem; color:var(--steel); line-height:1.7; }
-  .loading { display:flex; align-items:center; justify-content:center; gap:0.75rem; padding:4rem; color:var(--steel); font-family:var(--mono); font-size:0.82rem; }
-  .spin { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--rust); border-radius:50%; animation:spin 0.7s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
+/* Responsive */
+@media(max-width:900px){.dashboard{grid-template-columns:1fr}.ticker-bar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.ticker-bar{grid-template-columns:repeat(2,1fr)}}
 
-  footer { text-align:center; padding:2rem 0; border-top:1px solid var(--border); color:var(--gray-dark); font-size:0.72rem; margin-top:3rem; }
+/* Tranche colors */
+.t1{color:#448aff}.t2{color:#00e5ff}.t3{color:#00e676}.t4{color:#ffd700}.t5{color:#ff9100}
+.strike-zone{background:rgba(255,215,0,.05);border-left:2px solid var(--gold);padding:4px 8px;font-size:11px;color:var(--text2);margin-top:4px}
+
+/* Options Chain Grid */
+.chain-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.chain-controls select,.chain-controls input{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--font-mono);font-size:12px}
+.chain-controls .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:11px;font-family:var(--font-mono);cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text3);transition:all .15s;user-select:none}
+.chain-controls .chip.on{background:rgba(255,215,0,.12);color:var(--gold);border-color:rgba(255,215,0,.3)}
+.chain-stats{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px}
+.chain-stats .cs{background:var(--surface2);border-radius:4px;padding:6px 8px;text-align:center}
+.chain-stats .cs-label{color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+.chain-stats .cs-val{font-weight:600;margin-top:2px;color:var(--text)}
+.chain-grid{overflow-x:auto}
+.chain-grid .sec-labels{display:grid;grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr);gap:0;text-align:center;margin-bottom:2px}
+.chain-grid .sec-lbl{font-size:11px;font-weight:600;font-family:var(--font-mono);letter-spacing:1px;padding:4px 0}
+.chain-grid .sec-lbl.c{grid-column:1/7;color:var(--green)}
+.chain-grid .sec-lbl.s{grid-column:7;color:var(--gold)}
+.chain-grid .sec-lbl.p{grid-column:8/14;color:var(--red)}
+.chain-head{display:grid;grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr);gap:0;text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:4px 0;border-bottom:1px solid var(--border)}
+.chain-head .ch{padding:2px 4px}
+.chain-row{display:grid;grid-template-columns:repeat(6,1fr) 90px repeat(6,1fr);gap:0;text-align:center;font-family:var(--font-mono);font-size:12px;border-bottom:1px solid rgba(255,255,255,.02);transition:background .1s}
+.chain-row:hover{background:var(--surface2)}
+.chain-row .cell{padding:5px 4px;white-space:nowrap}
+.chain-row .cell.bid{color:var(--green)}.chain-row .cell.ask{color:var(--red)}
+.chain-row .cell.iv{color:var(--purple)}.chain-row .cell.dl{color:var(--cyan)}
+.chain-row .cell.oi{color:var(--text3);font-size:10px}
+.chain-row .cell.sk{font-weight:600;color:var(--gold);background:rgba(255,215,0,.04);position:relative}
+.chain-row .cell.mu{color:var(--text3)}
+.chain-row.atm{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15)}
+.chain-row.atm .cell.sk{color:var(--gold)}
+.chain-row.ic{background:rgba(0,230,118,.02)}.chain-row.ip{background:rgba(255,82,82,.02)}
+.atm-b{display:block;font-size:8px;letter-spacing:1px;color:var(--orange);margin-top:1px}
+.chain-loading{text-align:center;padding:40px;color:var(--text3)}
+.chain-loading .spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){.chain-stats{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
-<div class="container">
-
-  <header>
+<div class="app">
+  <div class="header">
     <div>
-      <div class="eyebrow">Mission Control &mdash; Options Desk</div>
-      <div class="page-title">MSTR Options Chain</div>
-      <div class="page-sub">Live options data via Tradier &mdash; select an expiration to load the full chain</div>
+      <h1>MSTR OPTIONS DESK</h1>
+      <div class="subtitle">Mission Control — Covered Call Strategy Dashboard — Started March 17, 2026</div>
     </div>
-    <div style="text-align:right">
-      <div class="price-label">Last Price</div>
-      <div class="live-price" id="livePrice">—</div>
-      <div class="price-change" id="priceChange">Loading...</div>
+    <div class="header-right">
+      <span class="header-time" id="clock"></span>
+      <span><span class="live-dot"></span>LIVE</span>
+      <button onclick="openSettings()">Settings</button>
+      <button onclick="refreshAll()">Refresh</button>
     </div>
-  </header>
+  </div>
 
-  <div class="card" style="margin-bottom:1.5rem">
-    <div class="controls">
-      <div class="cg">
-        <label>Expiration Date</label>
-        <input type="date" id="expiryDate" onchange="onDateChange()">
+  <!-- Price Ticker Bar -->
+  <div class="ticker-bar">
+    <div class="ticker btc">
+      <div class="ticker-label">BTC / USD</div>
+      <div class="ticker-value" id="btc-price">--</div>
+      <div class="ticker-change neutral" id="btc-change">loading...</div>
+    </div>
+    <div class="ticker mstr">
+      <div class="ticker-label">MSTR</div>
+      <div class="ticker-value" id="mstr-price">--</div>
+      <div class="ticker-change neutral" id="mstr-change">loading...</div>
+    </div>
+    <div class="ticker mnav">
+      <div class="ticker-label">mNAV Multiple</div>
+      <div class="ticker-value" id="mnav-value">--</div>
+      <div class="ticker-change neutral" id="mnav-zone">--</div>
+    </div>
+    <div class="ticker iv">
+      <div class="ticker-label">ATM IV (est)</div>
+      <div class="ticker-value" id="iv-value">--</div>
+      <div class="ticker-change neutral" id="iv-env">--</div>
+    </div>
+    <div class="ticker prem">
+      <div class="ticker-label">Premium Collected</div>
+      <div class="ticker-value" id="prem-total">$0</div>
+      <div class="ticker-change neutral" id="prem-pct">0% of $250K</div>
+    </div>
+    <div class="ticker margin">
+      <div class="ticker-label">Margin Balance</div>
+      <div class="ticker-value" id="margin-bal">--</div>
+      <div class="ticker-change neutral" id="margin-equity">--</div>
+    </div>
+  </div>
+
+  <!-- Alerts Panel -->
+  <div id="alerts-container"></div>
+
+  <!-- Dashboard Grid -->
+  <div class="dashboard">
+
+    <!-- Panel 1: Portfolio Value -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Portfolio Value</span>
+        <span class="panel-badge badge-live">LIVE</span>
       </div>
-      <div class="cg">
-        <label>Or Pick from List</label>
-        <select id="expirySelect" onchange="onSelectChange()">
-          <option value="">— select expiry —</option>
-        </select>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">MSTR Shares</div><div class="metric-value" id="port-mstr">--</div></div>
+        <div class="metric"><div class="metric-label">Cash + Premium</div><div class="metric-value" id="port-cash">--</div></div>
+        <div class="metric"><div class="metric-label">BTC Holdings</div><div class="metric-value" id="port-btc">--</div></div>
+        <div class="metric"><div class="metric-label">DCA BTC</div><div class="metric-value" id="port-dca">--</div></div>
+        <div class="metric"><div class="metric-label">Margin</div><div class="metric-value down" id="port-margin">--</div></div>
+        <div class="metric"><div class="metric-label">Net Portfolio</div><div class="metric-value" id="port-total" style="color:var(--gold)">--</div></div>
       </div>
-      <button class="btn" onclick="loadChain()">Load Chain</button>
-      <button class="btn outline" onclick="loadExpirations()">↻ Get Dates</button>
-      <button class="btn outline" id="refreshBtn" onclick="loadChain()" style="display:none">↻ Refresh</button>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
+          <span>Starting: $869,000 (Mar 17, 2026)</span><span id="port-gain-pct">--</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="port-progress" style="width:0%;background:var(--gold)"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+          <span>Exit trigger: $1,600,000</span><span id="port-exit-dist">--</span>
+        </div>
+      </div>
     </div>
-    <div class="status-bar">
-      <div class="dot" id="statusDot"></div>
-      <span id="statusText">Connecting to Tradier...</span>
+
+    <!-- Panel 2: Margin Safety -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Margin Safety Monitor</span>
+        <span class="panel-badge badge-live">LIVE</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Equity %</div><div class="metric-value" id="margin-eq-pct">--</div></div>
+        <div class="metric"><div class="metric-label">Excess</div><div class="metric-value" id="margin-excess">--</div></div>
+        <div class="metric"><div class="metric-label">Monthly Interest</div><div class="metric-value" id="margin-interest">--</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">MSTR price to margin call:</div>
+        <div style="font-family:var(--font-mono);font-size:18px;font-weight:600" id="margin-call-price">--</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">Distance to margin call:</div>
+        <div class="progress-bar"><div class="progress-fill" id="margin-progress" style="width:80%;background:var(--green)"></div></div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Active Positions -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <span class="panel-title">Active Covered Call Positions</span>
+        <span class="panel-badge badge-manual">MANUAL</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Tranche</th><th>Strike</th><th>Expiry</th><th>DTE</th><th>Open $</th><th>Est. Δ</th><th>% OTM</th><th>BTC to Breach</th><th>P/L Est.</th><th>Status</th>
+        </tr></thead>
+        <tbody id="positions-table"></tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="openAddPosition()">+ Add Position</button>
+        <button onclick="openRollLog()">Roll Log</button>
+      </div>
+    </div>
+
+    <!-- Panel 4: Roll Decision Alerts -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Roll Decision Engine</span>
+        <span class="panel-badge badge-live">LIVE</span>
+      </div>
+      <div id="roll-decisions"></div>
+    </div>
+
+    <!-- Panel 5: Premium Income Tracker -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">$250K Premium Target</span>
+        <span class="panel-badge badge-manual">MANUAL</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div>
+          <div style="font-size:11px;color:var(--text3)">Collected</div>
+          <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--green)" id="income-collected">$0</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3)">Remaining</div>
+          <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--text2)" id="income-remaining">$250,000</div>
+        </div>
+      </div>
+      <div class="progress-bar" style="height:10px;margin:12px 0"><div class="progress-fill" id="income-progress" style="width:0%;background:linear-gradient(90deg,var(--green),var(--gold))"></div></div>
+      <div class="metric-grid" style="margin-top:8px">
+        <div class="metric"><div class="metric-label">Weekly Avg</div><div class="metric-value" id="income-weekly">--</div></div>
+        <div class="metric"><div class="metric-label">Weeks Active</div><div class="metric-value" id="income-weeks">--</div></div>
+        <div class="metric"><div class="metric-label">Pace to $250K</div><div class="metric-value" id="income-pace">--</div></div>
+      </div>
+    </div>
+
+    <!-- Panel 6: Scenario Projections -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <span class="panel-title">Scenario Projection vs Actuals — Apr 2026 → Nov 2027</span>
+        <span class="panel-badge badge-live">LIVE</span>
+      </div>
+      <div class="chart-container"><canvas id="scenarioChart"></canvas></div>
+      <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green);margin-right:4px"></span>S1: Light Bear → exit Nov 2026</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--red);margin-right:4px"></span>S2: Crash First → exit Apr 2027</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);margin-right:4px"></span>S3: V-Shape → exit Aug 2026</span>
+        <span><span style="display:inline-block;width:10px;height:2px;border-radius:1px;background:#ff00ff;margin-right:4px;vertical-align:middle"></span>EXIT TRIGGER $1.6M</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--gold);margin-right:4px"></span>Actual Portfolio</span>
+      </div>
+    </div>
+
+    <!-- Panel 6b: Options Chain for Next Roll Target -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <span class="panel-title">Options Chain — Next Roll Target</span>
+        <span class="panel-badge badge-live">LIVE</span>
+      </div>
+      <div class="chain-controls">
+        <div class="input-group">
+          <label>Expiration</label>
+          <select id="chainExpirySelect" onchange="onChainExpiryChange()">
+            <option value="">Loading...</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Strike Range</label>
+          <input type="range" id="chainStrikeRange" min="3" max="30" value="12" oninput="onChainRangeChange()">
+          <span id="chainRangeVal" style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">±12</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;padding-top:14px">
+          <span class="chip on" id="cCalls" onclick="toggleChainCalls()">Calls</span>
+          <span class="chip on" id="cPuts" onclick="toggleChainPuts()">Puts</span>
+          <span class="chip" id="cITM" onclick="toggleChainITM()">ITM</span>
+          <span class="chip" id="cOTM" onclick="toggleChainOTM()">OTM</span>
+        </div>
+        <button onclick="loadFullChain()" style="margin-top:14px">Refresh Chain</button>
+      </div>
+      <div class="chain-stats" id="chainStatsBar" style="display:none">
+        <div class="cs"><div class="cs-label">Underlying</div><div class="cs-val" id="csPrice">--</div></div>
+        <div class="cs"><div class="cs-label">Expiry</div><div class="cs-val" id="csExpiry">--</div></div>
+        <div class="cs"><div class="cs-label">DTE</div><div class="cs-val" id="csDTE">--</div></div>
+        <div class="cs"><div class="cs-label">Call OI</div><div class="cs-val" id="csCallOI">--</div></div>
+        <div class="cs"><div class="cs-label">Put OI</div><div class="cs-val" id="csPutOI">--</div></div>
+        <div class="cs"><div class="cs-label">P/C Ratio</div><div class="cs-val" id="csPCR">--</div></div>
+        <div class="cs"><div class="cs-label">ATM IV</div><div class="cs-val" id="csATMIV">--</div></div>
+        <div class="cs"><div class="cs-label">Contracts</div><div class="cs-val" id="csCnt">--</div></div>
+      </div>
+      <div class="chain-grid" id="chainWrap">
+        <div class="chain-loading">Select an expiration and click Refresh to load the options chain</div>
+      </div>
+    </div>
+
+    <!-- Panel 7: mNAV Tracker -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">mNAV Trend</span>
+        <span class="panel-badge badge-live">LIVE</span>
+      </div>
+      <div class="chart-container" style="height:180px"><canvas id="mnavChart"></canvas></div>
+      <div class="metric-grid" style="margin-top:8px">
+        <div class="metric"><div class="metric-label">Current</div><div class="metric-value" id="mnav-current">--</div></div>
+        <div class="metric"><div class="metric-label">7d Avg</div><div class="metric-value" id="mnav-7d">--</div></div>
+        <div class="metric"><div class="metric-label">Trend</div><div class="metric-value" id="mnav-trend">--</div></div>
+      </div>
+    </div>
+
+    <!-- Panel 8: BTC Holdings & DCA -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">BTC Holdings & DCA</span>
+        <span class="panel-badge badge-manual">MANUAL</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Cold Storage</div><div class="metric-value" id="btc-cold">5.500</div></div>
+        <div class="metric"><div class="metric-label">DCA BTC</div><div class="metric-value" id="btc-dca-total">0.000</div></div>
+        <div class="metric"><div class="metric-label">Total BTC</div><div class="metric-value" style="color:var(--orange)" id="btc-total-holdings">5.500</div></div>
+        <div class="metric"><div class="metric-label">DCA Spent</div><div class="metric-value" id="dca-spent">$0</div></div>
+        <div class="metric"><div class="metric-label">DCA Avg Price</div><div class="metric-value" id="dca-avg">--</div></div>
+        <div class="metric"><div class="metric-label">BTC Value</div><div class="metric-value" style="color:var(--gold)" id="btc-value-total">--</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <button onclick="openDcaLog()">+ Log DCA Purchase</button>
+      </div>
     </div>
   </div>
-
-  <div class="stats-grid" id="statsBar" style="display:none">
-    <div class="stat"><div class="stat-lbl">MSTR Price</div><div class="stat-val o" id="sPrice">—</div></div>
-    <div class="stat"><div class="stat-lbl">Expiry</div><div class="stat-val" id="sExpiry" style="font-size:0.9rem">—</div></div>
-    <div class="stat"><div class="stat-lbl">DTE</div><div class="stat-val b" id="sDTE">—</div></div>
-    <div class="stat"><div class="stat-lbl">Call OI</div><div class="stat-val g" id="sCallOI">—</div></div>
-    <div class="stat"><div class="stat-lbl">Put OI</div><div class="stat-val r" id="sPutOI">—</div></div>
-    <div class="stat"><div class="stat-lbl">P/C Ratio</div><div class="stat-val" id="sPCR">—</div></div>
-    <div class="stat"><div class="stat-lbl">ATM IV</div><div class="stat-val b" id="sIV">—</div></div>
-    <div class="stat"><div class="stat-lbl">Contracts</div><div class="stat-val" id="sCnt">—</div></div>
-  </div>
-
-  <div class="filter-row" id="filterRow" style="display:none">
-    <span class="flbl">Strikes ±</span>
-    <input type="range" id="strikeRange" min="5" max="50" value="15" oninput="applyFilters()">
-    <span class="rval" id="rangeVal">15</span>
-    <div style="width:1px;height:18px;background:var(--border);margin:0 0.2rem"></div>
-    <button class="chip on" id="tCalls" onclick="toggleCalls()">Calls</button>
-    <button class="chip on" id="tPuts"  onclick="togglePuts()">Puts</button>
-    <button class="chip"    id="tITM"   onclick="toggleITM()">ITM Only</button>
-    <button class="chip"    id="tOTM"   onclick="toggleOTM()">OTM Only</button>
-  </div>
-
-  <div class="chain-wrap" id="chainWrap">
-    <div class="empty">
-      <div class="ico">📊</div>
-      <p>Select an expiration date and click <strong>Load Chain</strong><br>to view live MSTR options data.</p>
-    </div>
-  </div>
-
-  <footer>Six Peak Capital &nbsp;&middot;&nbsp; LV Construction &nbsp;&middot;&nbsp; Mission Control &nbsp;&middot;&nbsp; Options Desk</footer>
 </div>
 
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>Settings & Configuration</h2>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Tradier API Token</label>
+      <input type="text" id="tradier-token" placeholder="Enter your Tradier API token">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>MSTR Shares</label>
+      <input type="number" id="setting-shares" value="4000">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Cost Basis ($/share)</label>
+      <input type="number" id="setting-basis" value="140">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Cash on Hand ($)</label>
+      <input type="number" id="setting-cash" value="225000">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Margin Balance ($)</label>
+      <input type="number" id="setting-margin" value="223000">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>BTC Cold Storage</label>
+      <input type="number" id="setting-btc" value="5.5" step="0.001">
+    </div>
+    <div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--gold);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:1px">Strategy.com Data (Auto-Fetch)</span>
+        <span id="strat-fetch-status" style="font-size:10px;font-family:var(--font-mono);color:var(--text3)">Not fetched</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">BTC holdings auto-pulled from CoinGecko Treasury API. Manual overrides below.</div>
+      <button onclick="fetchStrategyData().then(()=>{ document.getElementById('setting-strat-btc').value=state.settings.stratBtc; })" style="font-size:10px;margin-bottom:8px">Refresh Strategy Data Now</button>
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Strategy BTC Holdings (auto-updated)</label>
+      <input type="number" id="setting-strat-btc" value="762099">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Strategy Shares Outstanding (basic, thousands)</label>
+      <input type="number" id="setting-strat-shares" value="345084">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Strategy Debt + Prefs ($M)</label>
+      <input type="number" id="setting-strat-debt" value="18254">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Premium Income Target ($)</label>
+      <input type="number" id="setting-target" value="250000">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="saveSettings()">Save</button>
+      <button onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Position Modal -->
+<div class="modal-overlay" id="addPositionModal">
+  <div class="modal">
+    <h2>Add / Update Position</h2>
+    <div class="input-row">
+      <div class="input-group"><label>Tranche</label>
+        <select id="pos-tranche"><option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>T5</option></select>
+      </div>
+      <div class="input-group"><label>Strike</label><input type="number" id="pos-strike" placeholder="170"></div>
+      <div class="input-group"><label>Expiry</label><input type="date" id="pos-expiry"></div>
+      <div class="input-group"><label>Contracts</label><input type="number" id="pos-contracts" value="8"></div>
+      <div class="input-group"><label>Open $/share</label><input type="number" id="pos-premium" step="0.01" placeholder="2.50"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="savePosition()">Save Position</button>
+      <button onclick="closeAddPosition()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Roll Log Modal -->
+<div class="modal-overlay" id="rollLogModal">
+  <div class="modal">
+    <h2>Roll Log — Premium Income History</h2>
+    <div class="input-row">
+      <div class="input-group"><label>Date</label><input type="date" id="roll-date"></div>
+      <div class="input-group"><label>Tranche</label>
+        <select id="roll-tranche"><option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>T5</option><option>ALL</option></select>
+      </div>
+      <div class="input-group"><label>Credit/Debit ($)</label><input type="number" id="roll-credit" step="0.01" placeholder="1.50"></div>
+      <div class="input-group"><label>Contracts</label><input type="number" id="roll-contracts" value="8"></div>
+      <div class="input-group"><label>Notes</label><input type="text" id="roll-notes" placeholder="Rolled from $180 to $185"></div>
+    </div>
+    <button onclick="saveRoll()" style="margin:8px 0">+ Log Roll</button>
+    <table>
+      <thead><tr><th>Date</th><th>Tranche</th><th>Credit</th><th>Contracts</th><th>Total</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="roll-log-table"></tbody>
+    </table>
+    <div style="margin-top:12px"><button onclick="closeRollLog()">Close</button></div>
+  </div>
+</div>
+
+<!-- DCA Log Modal -->
+<div class="modal-overlay" id="dcaLogModal">
+  <div class="modal">
+    <h2>BTC DCA Log</h2>
+    <div class="input-row">
+      <div class="input-group"><label>Date</label><input type="date" id="dca-date"></div>
+      <div class="input-group"><label>Amount ($)</label><input type="number" id="dca-amount" value="200"></div>
+      <div class="input-group"><label>BTC Price</label><input type="number" id="dca-btc-price" placeholder="66000"></div>
+      <div class="input-group"><label>BTC Received</label><input type="number" id="dca-btc-received" step="0.000001" placeholder="0.003030"></div>
+    </div>
+    <button onclick="saveDca()" style="margin:8px 0">+ Log DCA</button>
+    <table>
+      <thead><tr><th>Date</th><th>$</th><th>BTC Price</th><th>BTC</th><th></th></tr></thead>
+      <tbody id="dca-log-table"></tbody>
+    </table>
+    <div style="margin-top:12px"><button onclick="closeDcaLog()">Close</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const TOKEN   = "NmVn72M4E7bi6xCUiS95uKn88Jrs";
-const BASE    = "https://api.tradier.com/v1";
-let chain     = [];
-let undly     = 0;
-let sCalls=true, sPuts=true, sITM=false, sOTM=false;
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  btcPrice: 0, mstrPrice: 0, btcChange24h: 0, mstrPrev: 0,
+  liveOptions: {},
+  settings: {
+    tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs', shares: 4000, basis: 140,
+    cash: 223486.55, margin: 223790.84,
+    marginRates: { above100k: 4.50, mid: 4.75, below50k: 4.90 },
+    btcHoldings: 5.50944298, stratBtc: 762099, stratShares: 345084, stratDebt: 18263,
+    stratPref: 10009, stratCash: 2250, stratEV: 59517,
+    stratMktCap: 43555, stratMnav: 1.18, stratIV: 69,
+    target: 250000
+  },
+  positions: [
+    { tranche: 'T1', strike: 180, expiry: '2026-05-01', contracts: 8, premium: 1.79, openDelta: 0.13, currentPrice: 1.00 },
+    { tranche: 'T2', strike: 175, expiry: '2026-05-01', contracts: 8, premium: 2.28, openDelta: 0.16, currentPrice: 1.14 },
+    { tranche: 'T3', strike: 170, expiry: '2026-05-01', contracts: 8, premium: 2.88, openDelta: 0.19, currentPrice: 1.50 },
+    { tranche: 'T4', strike: 165, expiry: '2026-05-01', contracts: 8, premium: 3.60, openDelta: 0.23, currentPrice: 1.71 },
+    { tranche: 'T5', strike: 160, expiry: '2026-05-01', contracts: 8, premium: 4.43, openDelta: 0.28, currentPrice: 2.34 }
+  ],
+  rolls: [
+    { date: '2026-03-17', tranche: 'T1', credit: 1.22, contracts: 8, notes: 'STO Apr24 $210 (10Δ ladder open)' },
+    { date: '2026-03-17', tranche: 'T2', credit: 1.38, contracts: 8, notes: 'STO Apr24 $205' },
+    { date: '2026-03-17', tranche: 'T3', credit: 2.12, contracts: 8, notes: 'STO Apr24 $195' },
+    { date: '2026-03-17', tranche: 'T4', credit: 2.60, contracts: 8, notes: 'STO Apr24 $190' },
+    { date: '2026-03-17', tranche: 'T5', credit: 3.26, contracts: 8, notes: 'STO Apr24 $185' },
+    { date: '2026-03-17', tranche: 'ALL', credit: 0.09, contracts: 40, notes: 'Prior $160 CC closed +$700' },
+    { date: '2026-03-24', tranche: 'T1', credit: 1.79, contracts: 8, notes: 'Roll to May1 $180 — credit $1.79' },
+    { date: '2026-03-24', tranche: 'T2', credit: 2.28, contracts: 8, notes: 'Roll to May1 $175 — credit $2.28' },
+    { date: '2026-03-24', tranche: 'T3', credit: 2.88, contracts: 8, notes: 'Roll to May1 $170 — credit $2.88' },
+    { date: '2026-03-24', tranche: 'T4', credit: 3.60, contracts: 8, notes: 'Roll to May1 $165 — credit $3.60' },
+    { date: '2026-03-24', tranche: 'T5', credit: 4.43, contracts: 8, notes: 'Roll to May1 $160 — credit $4.43' }
+  ],
+  dcaLog: [],
+  mnavHistory: [
+    { date: '2026-03-17', value: 1.21 },
+    { date: '2026-03-18', value: 1.20 },
+    { date: '2026-03-19', value: 1.19 },
+    { date: '2026-03-20', value: 1.19 },
+    { date: '2026-03-21', value: 1.20 },
+    { date: '2026-03-24', value: 1.21 },
+    { date: '2026-03-25', value: 1.20 },
+    { date: '2026-03-26', value: 1.19 },
+    { date: '2026-03-27', value: 1.19 },
+    { date: '2026-03-28', value: 1.18 },
+    { date: '2026-03-29', value: 1.18 }
+  ],
+  portfolioHistory: [
+    { date: '2026-03-17', value: 869000 },
+    { date: '2026-03-21', value: 860000 },
+    { date: '2026-03-28', value: 848000 },
+    { date: '2026-03-29', value: 843000 }
+  ]
+};
 
-const fmt  = (v,d=2) => (v!=null&&!isNaN(v)) ? parseFloat(v).toFixed(d) : '—';
-const fmtK = v => (v!=null&&!isNaN(v)) ? parseInt(v).toLocaleString() : '—';
-const pct  = v => (v!=null&&!isNaN(v)) ? (parseFloat(v)*100).toFixed(1)+'%' : '—';
-
-function setStatus(type, msg) {
-  document.getElementById('statusDot').className = 'dot'+(type?' '+type:'');
-  document.getElementById('statusText').textContent = msg;
-}
-
-async function api(path, params={}) {
-  const url = new URL(`${BASE}${path}`);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
-  const r = await fetch(url, { headers:{ Authorization:`Bearer ${TOKEN}`, Accept:'application/json' } });
-  if (!r.ok) throw new Error(`API ${r.status}`);
-  return r.json();
-}
-
-async function fetchPrice() {
+// Load from localStorage
+function loadState() {
   try {
-    const d = await api('/markets/quotes', {symbols:'MSTR'});
-    const q = d?.quotes?.quote;
-    if (!q) return;
-    undly = parseFloat(q.last)||0;
-    const chg = parseFloat(q.change)||0;
-    const pct2 = parseFloat(q.change_percentage)||0;
-    document.getElementById('livePrice').textContent = `$${undly.toFixed(2)}`;
-    const el = document.getElementById('priceChange');
-    el.textContent = `${chg>=0?'+':''}${chg.toFixed(2)}  (${pct2.toFixed(2)}%)`;
-    el.className = 'price-change '+(chg>=0?'up':'down');
-  } catch(e) { console.warn(e); }
-}
-
-async function loadExpirations() {
-  setStatus('','Loading expiration dates...');
-  try {
-    const d = await api('/markets/options/expirations', {symbol:'MSTR', includeAllRoots:'true'});
-    const dates = d?.expirations?.date || [];
-    const sel = document.getElementById('expirySelect');
-    sel.innerHTML = '<option value="">— select expiry —</option>';
-    dates.forEach(dt => {
-      const dte = Math.round((new Date(dt)-new Date())/86400000);
-      const o = document.createElement('option');
-      o.value=dt; o.textContent=`${dt}  (${dte}d)`; sel.appendChild(o);
-    });
-    setStatus('live', `Ready — ${dates.length} expirations loaded.`);
-  } catch(e) { setStatus('error',`Failed: ${e.message}`); }
-}
-
-async function loadChain() {
-  const expiry = document.getElementById('expiryDate').value
-               || document.getElementById('expirySelect').value;
-  if (!expiry) { alert('Select an expiration date first.'); return; }
-
-  setStatus('',`Loading chain for ${expiry}...`);
-  document.getElementById('chainWrap').innerHTML =
-    '<div class="loading"><div class="spin"></div>Fetching MSTR options from Tradier...</div>';
-
-  try {
-    await fetchPrice();
-    const d = await api('/markets/options/chains', {symbol:'MSTR', expiration:expiry, greeks:'true'});
-    const opts = d?.options?.option || [];
-
-    if (!opts.length) {
-      document.getElementById('chainWrap').innerHTML =
-        '<div class="empty"><div class="ico">🔍</div><p>No options found for this date.<br>Try a different expiration.</p></div>';
-      setStatus('error','No contracts returned.'); return;
+    const saved = localStorage.getItem('mstr-options-desk');
+    const version = localStorage.getItem('mstr-options-desk-version');
+    // Version 2: real data from 3/29/2026 screenshots
+    if (saved && version === 'v2') {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    } else {
+      // First load with new data — clear old cache
+      localStorage.removeItem('mstr-options-desk');
+      localStorage.setItem('mstr-options-desk-version', 'v2');
     }
+  } catch(e) { console.error('Failed to load state', e); }
+}
 
-    chain = opts;
-    renderChain(opts, expiry);
-    updateStats(opts, expiry);
-    document.getElementById('statsBar').style.display   = 'grid';
-    document.getElementById('filterRow').style.display  = 'flex';
-    document.getElementById('refreshBtn').style.display = '';
-    setStatus('live',`${opts.length} contracts — ${expiry} — updated ${new Date().toLocaleTimeString()}`);
+function saveState() {
+  try {
+    localStorage.setItem('mstr-options-desk-version', 'v2');
+    localStorage.setItem('mstr-options-desk', JSON.stringify({
+      settings: state.settings, positions: state.positions,
+      rolls: state.rolls, dcaLog: state.dcaLog,
+      mnavHistory: state.mnavHistory, portfolioHistory: state.portfolioHistory
+    }));
+  } catch(e) { console.error('Failed to save state', e); }
+}
+
+// ============================================================
+// DATA FETCHING
+// ============================================================
+async function fetchBtcPrice() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+    const data = await res.json();
+    state.btcPrice = data.bitcoin.usd;
+    state.btcChange24h = data.bitcoin.usd_24h_change;
+    return true;
+  } catch(e) { console.error('BTC fetch failed', e); return false; }
+}
+
+async function fetchMstrPrice() {
+  if (!state.settings.tradierToken) {
+    const ratio = 126 / 66000;
+    state.mstrPrice = Math.round(state.btcPrice * ratio * 100) / 100;
+    return true;
+  }
+  try {
+    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=MSTR', {
+      headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.quotes && data.quotes.quote) {
+      state.mstrPrev = data.quotes.quote.prevclose;
+      state.mstrPrice = data.quotes.quote.last || data.quotes.quote.close;
+    }
+    return true;
   } catch(e) {
-    setStatus('error', e.message);
-    document.getElementById('chainWrap').innerHTML =
-      `<div class="empty"><div class="ico">⚠️</div><p>${e.message}</p></div>`;
+    console.error('MSTR fetch failed', e);
+    const ratio = 126 / 66000;
+    state.mstrPrice = Math.round(state.btcPrice * ratio * 100) / 100;
+    return false;
   }
 }
 
-function renderChain(opts, expiry) {
-  const strikes = [...new Set(opts.map(o=>o.strike))].sort((a,b)=>a-b);
-  const cMap = Object.fromEntries(opts.filter(o=>o.option_type==='call').map(o=>[o.strike,o]));
-  const pMap = Object.fromEntries(opts.filter(o=>o.option_type==='put').map(o=>[o.strike,o]));
+async function fetchOptionsChain(expiry) {
+  if (!state.settings.tradierToken) return false;
+  try {
+    const res = await fetch(
+      `https://api.tradier.com/v1/markets/options/chains?symbol=MSTR&expiration=${expiry}&greeks=true`,
+      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+    );
+    const data = await res.json();
+    if (data.options && data.options.option) {
+      const chain = data.options.option;
+      state.liveOptions[expiry] = {};
+      chain.forEach(opt => {
+        if (opt.option_type === 'call') {
+          state.liveOptions[expiry][opt.strike] = {
+            bid: opt.bid, ask: opt.ask, last: opt.last,
+            volume: opt.volume, openInterest: opt.open_interest,
+            iv: opt.greeks ? opt.greeks.mid_iv : 0,
+            delta: opt.greeks ? opt.greeks.delta : 0,
+            gamma: opt.greeks ? opt.greeks.gamma : 0,
+            theta: opt.greeks ? opt.greeks.theta : 0,
+            vega: opt.greeks ? opt.greeks.vega : 0,
+          };
+        }
+      });
+      // Update positions with live greeks
+      state.positions.forEach(pos => {
+        if (pos.expiry === expiry && state.liveOptions[expiry][pos.strike]) {
+          const live = state.liveOptions[expiry][pos.strike];
+          pos.liveDelta = live.delta;
+          pos.liveIV = live.iv;
+          pos.liveTheta = live.theta;
+          pos.liveBid = live.bid;
+          pos.liveAsk = live.ask;
+          pos.liveMid = (live.bid + live.ask) / 2;
+        }
+      });
+      return true;
+    }
+    return false;
+  } catch(e) { console.error('Options chain fetch failed', e); return false; }
+}
 
-  const n = parseInt(document.getElementById('strikeRange').value);
-  document.getElementById('rangeVal').textContent = n;
+async function fetchAllOptionsChains() {
+  const expiries = [...new Set(state.positions.map(p => p.expiry))];
+  for (const exp of expiries) {
+    await fetchOptionsChain(exp);
+  }
+}
 
-  const atm = strikes.reduce((a,b)=>Math.abs(b-undly)<Math.abs(a-undly)?b:a);
-  const ai  = strikes.indexOf(atm);
-  let vis = strikes.slice(Math.max(0,ai-n), ai+n+1);
-  if (sITM) vis = vis.filter(s=>s<undly);
-  if (sOTM) vis = vis.filter(s=>s>undly);
+// ============================================================
+// CALCULATIONS
+// ============================================================
+function calcMnav() {
+  const s = state.settings;
+  const mktCap = state.mstrPrice * s.stratShares * 1000;
+  const btcVal = state.btcPrice * s.stratBtc;
+  if (btcVal === 0) return 0;
+  return mktCap / btcVal;
+}
+
+function calcGrossMnav() {
+  // mNAV = Enterprise Value / BTC NAV
+  // Strategy.com formula: EV = Market Cap + Debt - Cash (prefs NOT included)
+  const s = state.settings;
+  if (state.mstrPrice > 0 && state.btcPrice > 0) {
+    const mktCap = state.mstrPrice * s.stratShares * 1000;
+    const ev = mktCap + (s.stratDebt * 1e6) - (s.stratCash * 1e6);
+    const btcNav = s.stratBtc * state.btcPrice;
+    if (btcNav === 0) return s.stratMnav || 1.18;
+    return ev / btcNav;
+  }
+  return s.stratMnav || 1.18;
+}
+
+function calcMarginInterest() {
+  // Tiered margin rate: 4.50% above $100K, 4.75% $50-100K, 4.90% below $50K
+  const bal = state.settings.margin;
+  const r = state.settings.marginRates || { above100k: 4.50, mid: 4.75, below50k: 4.90 };
+  let annual = 0;
+  if (bal > 100000) {
+    annual += (bal - 100000) * (r.above100k / 100);
+    annual += 50000 * (r.mid / 100);
+    annual += 50000 * (r.below50k / 100);
+  } else if (bal > 50000) {
+    annual += (bal - 50000) * (r.mid / 100);
+    annual += 50000 * (r.below50k / 100);
+  } else {
+    annual += bal * (r.below50k / 100);
+  }
+  return { annual: Math.round(annual), monthly: Math.round(annual / 12), daily: Math.round(annual / 365) };
+}
+
+function estimateIV() {
+  // Use Strategy.com reported IV as baseline (69% as of 3/29/2026)
+  // Adjust based on BTC price regime
+  if (state.btcPrice < 45000) return 110;
+  if (state.btcPrice < 55000) return 95;
+  if (state.btcPrice < 65000) return 80;
+  if (state.btcPrice < 75000) return 69; // current baseline from Strategy.com
+  if (state.btcPrice < 90000) return 72;
+  if (state.btcPrice < 110000) return 68;
+  return 65;
+}
+
+function estimateDelta(strike, dte, iv) {
+  // Simplified Black-Scholes delta approximation
+  const S = state.mstrPrice;
+  if (S <= 0 || strike <= 0 || dte <= 0) return 0;
+  const t = dte / 365;
+  const vol = iv / 100;
+  const d1 = (Math.log(S / strike) + (0.05 + vol * vol / 2) * t) / (vol * Math.sqrt(t));
+  // Normal CDF approximation
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+  const p = 0.3275911;
+  const sign = d1 < 0 ? -1 : 1;
+  const x = Math.abs(d1) / Math.sqrt(2);
+  const t2 = 1 / (1 + p * x);
+  const y = 1 - (((((a5 * t2 + a4) * t2) + a3) * t2 + a2) * t2 + a1) * t2 * Math.exp(-x * x);
+  return 0.5 * (1 + sign * y);
+}
+
+function calcPortfolioValue() {
+  const s = state.settings;
+  const mstrVal = s.shares * state.mstrPrice;
+  const totalPremium = state.rolls.reduce((sum, r) => sum + (r.credit * r.contracts * 100), 0);
+  const dcaTotal = state.dcaLog.reduce((sum, d) => sum + d.btcReceived, 0);
+  const dcaSpent = state.dcaLog.reduce((sum, d) => sum + d.amount, 0);
+  const btcVal = (s.btcHoldings + dcaTotal) * state.btcPrice;
+  const cashRemaining = s.cash + totalPremium - dcaSpent;
+  return { mstrVal, cashRemaining, btcVal, margin: s.margin, totalPremium, dcaTotal, dcaSpent,
+    net: mstrVal + cashRemaining + btcVal - s.margin };
+}
+
+function btcToBreachStrike(strike) {
+  if (state.mstrPrice <= 0) return 0;
+  const ratio = state.mstrPrice / state.btcPrice;
+  return strike / ratio;
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updateTickers() {
+  document.getElementById('btc-price').textContent = '$' + Math.round(state.btcPrice).toLocaleString();
+  const btcCh = state.btcChange24h;
+  const btcEl = document.getElementById('btc-change');
+  btcEl.textContent = (btcCh >= 0 ? '+' : '') + btcCh.toFixed(2) + '% 24h';
+  btcEl.className = 'ticker-change ' + (btcCh >= 0 ? 'up' : 'down');
+
+  document.getElementById('mstr-price').textContent = '$' + state.mstrPrice.toFixed(2);
+  const mstrCh = state.mstrPrev ? ((state.mstrPrice - state.mstrPrev) / state.mstrPrev * 100) : 0;
+  const mstrEl = document.getElementById('mstr-change');
+  mstrEl.textContent = (mstrCh >= 0 ? '+' : '') + mstrCh.toFixed(2) + '%';
+  mstrEl.className = 'ticker-change ' + (mstrCh >= 0 ? 'up' : 'down');
+
+  const mnav = calcGrossMnav();
+  document.getElementById('mnav-value').textContent = mnav.toFixed(3) + 'x';
+  const mnavZone = document.getElementById('mnav-zone');
+  if (mnav < 1.0) { mnavZone.textContent = 'DISCOUNT'; mnavZone.className = 'ticker-change down'; }
+  else if (mnav < 1.3) { mnavZone.textContent = 'NEUTRAL'; mnavZone.className = 'ticker-change neutral'; }
+  else if (mnav < 1.6) { mnavZone.textContent = 'EXPANDING'; mnavZone.className = 'ticker-change up'; }
+  else { mnavZone.textContent = 'EUPHORIC'; mnavZone.className = 'ticker-change up'; }
+
+  const iv = estimateIV();
+  document.getElementById('iv-value').textContent = iv.toFixed(0) + '%';
+  const ivEnv = document.getElementById('iv-env');
+  if (iv > 90) { ivEnv.textContent = 'IV SPIKE'; ivEnv.className = 'ticker-change up'; }
+  else if (iv > 75) { ivEnv.textContent = 'ELEVATED'; ivEnv.className = 'ticker-change up'; }
+  else if (iv > 65) { ivEnv.textContent = 'NORMAL'; ivEnv.className = 'ticker-change neutral'; }
+  else { ivEnv.textContent = 'LOW'; ivEnv.className = 'ticker-change down'; }
+
+  const pv = calcPortfolioValue();
+  document.getElementById('prem-total').textContent = '$' + Math.round(pv.totalPremium).toLocaleString();
+  const pctTarget = (pv.totalPremium / state.settings.target * 100).toFixed(1);
+  document.getElementById('prem-pct').textContent = pctTarget + '% of $' + (state.settings.target/1000) + 'K';
+  document.getElementById('prem-pct').className = 'ticker-change ' + (pv.totalPremium > state.settings.target * 0.5 ? 'up' : 'neutral');
+
+  document.getElementById('margin-bal').textContent = '$' + Math.round(state.settings.margin).toLocaleString();
+  const eqPct = ((state.settings.shares * state.mstrPrice - state.settings.margin) / (state.settings.shares * state.mstrPrice) * 100);
+  document.getElementById('margin-equity').textContent = eqPct.toFixed(1) + '% equity';
+  document.getElementById('margin-equity').className = 'ticker-change ' + (eqPct > 55 ? 'up' : eqPct > 45 ? 'neutral' : 'down');
+}
+
+function updatePortfolio() {
+  const pv = calcPortfolioValue();
+  document.getElementById('port-mstr').textContent = '$' + Math.round(pv.mstrVal).toLocaleString();
+  document.getElementById('port-cash').textContent = '$' + Math.round(pv.cashRemaining).toLocaleString();
+  document.getElementById('port-btc').textContent = '$' + Math.round(state.settings.btcHoldings * state.btcPrice).toLocaleString();
+  document.getElementById('port-dca').textContent = '$' + Math.round(pv.dcaTotal * state.btcPrice).toLocaleString();
+  document.getElementById('port-margin').textContent = '($' + Math.round(pv.margin).toLocaleString() + ')';
+  document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
+
+  const gain = pv.net - 869000;
+  const gainPct = (gain / 869000 * 100).toFixed(1);
+  document.getElementById('port-gain-pct').textContent = (gain >= 0 ? '+' : '') + '$' + Math.round(gain).toLocaleString() + ' (' + gainPct + '%)';
+  document.getElementById('port-gain-pct').style.color = gain >= 0 ? 'var(--green)' : 'var(--red)';
+  
+  // Progress toward $1.6M exit
+  const exitTarget = 1600000;
+  const exitDist = exitTarget - pv.net;
+  document.getElementById('port-exit-dist').textContent = exitDist > 0 ? '$' + Math.round(exitDist).toLocaleString() + ' to exit' : 'EXIT TRIGGERED';
+  document.getElementById('port-exit-dist').style.color = exitDist <= 0 ? '#ff00ff' : 'var(--text3)';
+  document.getElementById('port-progress').style.width = Math.min(100, Math.max(0, (pv.net / exitTarget * 100))) + '%';
+  document.getElementById('port-progress').style.background = pv.net >= exitTarget ? '#ff00ff' : 'var(--gold)';
+}
+
+function updateMarginSafety() {
+  const s = state.settings;
+  const posVal = s.shares * state.mstrPrice;
+  const equity = posVal - s.margin;
+  const eqPct = posVal > 0 ? equity / posVal * 100 : 0;
+  const maintenance = posVal * 0.4;
+  const excess = equity - maintenance;
+  const callPrice = s.margin / (s.shares * 0.6);
+  const interest = calcMarginInterest();
+
+  document.getElementById('margin-eq-pct').textContent = eqPct.toFixed(1) + '%';
+  document.getElementById('margin-eq-pct').style.color = eqPct > 55 ? 'var(--green)' : eqPct > 45 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('margin-excess').textContent = '$' + Math.round(excess).toLocaleString();
+  document.getElementById('margin-excess').style.color = excess > 50000 ? 'var(--green)' : excess > 0 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('margin-interest').textContent = '$' + interest.monthly.toLocaleString() + '/mo';
+  document.getElementById('margin-interest').style.color = 'var(--orange)';
+  document.getElementById('margin-call-price').textContent = '$' + callPrice.toFixed(2);
+  document.getElementById('margin-call-price').style.color = (state.mstrPrice - callPrice) / state.mstrPrice > 0.3 ? 'var(--green)' : 'var(--orange)';
+
+  const distPct = Math.min(100, Math.max(0, (state.mstrPrice - callPrice) / state.mstrPrice * 100));
+  document.getElementById('margin-progress').style.width = distPct + '%';
+  document.getElementById('margin-progress').style.background = distPct > 40 ? 'var(--green)' : distPct > 20 ? 'var(--orange)' : 'var(--red)';
+}
+
+function updatePositions() {
+  const tbody = document.getElementById('positions-table');
+  tbody.innerHTML = '';
+  const iv = estimateIV();
+  const colors = { T1: '#448aff', T2: '#00e5ff', T3: '#00e676', T4: '#ffd700', T5: '#ff9100' };
+
+  state.positions.forEach((pos, i) => {
+    const dte = Math.max(0, Math.ceil((new Date(pos.expiry) - new Date()) / 86400000));
+    const hasLive = pos.liveDelta !== undefined;
+    const delta = hasLive ? pos.liveDelta : estimateDelta(pos.strike, dte, iv);
+    const posIV = hasLive && pos.liveIV ? (pos.liveIV * 100).toFixed(1) + '%' : iv.toFixed(0) + '%*';
+    const otm = ((pos.strike - state.mstrPrice) / state.mstrPrice * 100);
+    const btcBreach = btcToBreachStrike(pos.strike);
+    const currentMid = hasLive ? pos.liveMid : null;
+    const pl = currentMid ? (pos.premium - currentMid) * pos.contracts * 100 : 0;
+    const theta = hasLive && pos.liveTheta ? pos.liveTheta : 0;
+
+    // Target deltas per tranche in 15Δ blended ladder
+    const targetDeltas = { T1: 0.13, T2: 0.16, T3: 0.19, T4: 0.23, T5: 0.28 };
+    const targetD = targetDeltas[pos.tranche] || 0.15;
+    const overTarget = delta - targetD;
+
+    let status = 'ON TARGET';
+    let statusColor = 'var(--green)';
+    if (delta > 0.45) { status = 'DANGER'; statusColor = 'var(--red)'; }
+    else if (delta > targetD + 0.15) { status = 'ELEVATED'; statusColor = 'var(--orange)'; }
+    else if (delta > targetD + 0.08) { status = 'WATCH'; statusColor = 'var(--gold)'; }
+    else if (delta < targetD - 0.06) { status = 'LOW Δ'; statusColor = 'var(--cyan)'; }
+
+    const liveTag = hasLive ? '' : ' *est';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:${colors[pos.tranche]}">${pos.tranche}</td>
+      <td>$${pos.strike}</td>
+      <td>${pos.expiry}</td>
+      <td>${dte}d</td>
+      <td>$${pos.premium.toFixed(2)}</td>
+      <td>${(delta * 100).toFixed(1)}Δ${liveTag}</td>
+      <td>${otm.toFixed(1)}%</td>
+      <td>$${Math.round(btcBreach).toLocaleString()}</td>
+      <td style="color:${pl >= 0 ? 'var(--green)' : 'var(--red)'}">$${Math.round(pl).toLocaleString()}${hasLive ? '' : '*'}</td>
+      <td style="color:${statusColor}">${status}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateRollDecisions() {
+  const container = document.getElementById('roll-decisions');
+  container.innerHTML = '';
+  const iv = estimateIV();
+  const today = new Date().getDay(); // 0=Sun, 2=Tue, 3=Wed, 4=Thu
+
+  state.positions.forEach(pos => {
+    const dte = Math.max(0, Math.ceil((new Date(pos.expiry) - new Date()) / 86400000));
+    const hasLive = pos.liveDelta !== undefined;
+    const delta = hasLive ? pos.liveDelta : estimateDelta(pos.strike, dte, iv);
+    const d = Math.round(delta * 100);
+    const src = hasLive ? '' : ' (est)';
+
+    // Per-tranche target deltas for 15Δ blended ladder
+    const targetDeltas = { T1: 13, T2: 16, T3: 19, T4: 23, T5: 28 };
+    const tgt = targetDeltas[pos.tranche] || 15;
+
+    let alertClass = 'alert-success';
+    let icon = '✓';
+    let msg = '';
+
+    if (d <= tgt - 8) {
+      alertClass = 'alert-info';
+      msg = `${pos.tranche} ($${pos.strike}): ${d}Δ — Below target (${tgt}Δ). Roll DOWN for more credit on next scheduled roll`;
+      icon = 'ℹ';
+    } else if (d <= tgt + 5) {
+      alertClass = 'alert-success';
+      msg = `${pos.tranche} ($${pos.strike}): ${d}Δ — On target (${tgt}Δ). Hold, roll OUT to ~40 DTE on schedule`;
+    } else if (d <= tgt + 12) {
+      alertClass = 'alert-info';
+      msg = `${pos.tranche} ($${pos.strike}): ${d}Δ — Slightly above target. Roll UP and OUT on next scheduled day`;
+      icon = 'ℹ';
+    } else if (d <= tgt + 20) {
+      alertClass = 'alert-warn';
+      msg = `${pos.tranche} ($${pos.strike}): ${d}Δ — Elevated vs ${tgt}Δ target. Roll UP and OUT for credit ASAP`;
+      icon = '⚠';
+    } else {
+      alertClass = 'alert-danger';
+      msg = `${pos.tranche} ($${pos.strike}): ${d}Δ — CRITICAL. Consider closing or accepting assignment + buy-write`;
+      icon = '✕';
+    }
+
+    if (dte <= 7) {
+      alertClass = dte <= 3 ? 'alert-danger' : 'alert-warn';
+      msg += ` | ${dte} DTE — ${dte <= 3 ? 'ROLL IMMEDIATELY' : 'Roll soon'}`;
+      icon = dte <= 3 ? '✕' : '⚠';
+    }
+
+    container.innerHTML += `<div class="alert ${alertClass}"><span class="alert-icon">${icon}</span>${msg}</div>`;
+  });
+
+  // mNAV alert
+  const mnav = calcGrossMnav();
+  if (mnav > 1.35) {
+    container.innerHTML += `<div class="alert alert-warn"><span class="alert-icon">⚠</span>mNAV at ${mnav.toFixed(2)}x — expanding. Consider tightening deltas or early rolls.</div>`;
+  }
+
+  // IV alert
+  if (iv > 85) {
+    container.innerHTML += `<div class="alert alert-success"><span class="alert-icon">✓</span>IV at ${iv.toFixed(0)}% — elevated. Roll for outsized credits today.</div>`;
+  }
+
+  if (state.positions.length === 0) {
+    container.innerHTML = '<div class="alert alert-info"><span class="alert-icon">ℹ</span>No positions loaded. Add your covered call positions to see roll decisions.</div>';
+  }
+}
+
+function updateIncomeTracker() {
+  const totalPremium = state.rolls.reduce((sum, r) => sum + (r.credit * r.contracts * 100), 0);
+  const target = state.settings.target;
+  const remaining = target - totalPremium;
+  const pct = Math.min(100, totalPremium / target * 100);
+
+  document.getElementById('income-collected').textContent = '$' + Math.round(totalPremium).toLocaleString();
+  document.getElementById('income-remaining').textContent = '$' + Math.round(Math.max(0, remaining)).toLocaleString();
+  document.getElementById('income-progress').style.width = pct + '%';
+
+  const weeks = state.rolls.length > 0 ?
+    Math.max(1, Math.ceil((new Date() - new Date(state.rolls[0].date)) / (7 * 86400000))) : 0;
+  const weeklyAvg = weeks > 0 ? totalPremium / weeks : 0;
+
+  document.getElementById('income-weekly').textContent = weeks > 0 ? '$' + Math.round(weeklyAvg).toLocaleString() : '--';
+  document.getElementById('income-weeks').textContent = weeks > 0 ? weeks.toString() : '0';
+
+  if (weeklyAvg > 0) {
+    const weeksToTarget = remaining / weeklyAvg;
+    const targetDate = new Date(Date.now() + weeksToTarget * 7 * 86400000);
+    document.getElementById('income-pace').textContent = targetDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  } else {
+    document.getElementById('income-pace').textContent = '--';
+  }
+}
+
+function updateBtcHoldings() {
+  const dcaTotal = state.dcaLog.reduce((sum, d) => sum + d.btcReceived, 0);
+  const dcaSpent = state.dcaLog.reduce((sum, d) => sum + d.amount, 0);
+  const totalBtc = state.settings.btcHoldings + dcaTotal;
+
+  document.getElementById('btc-cold').textContent = state.settings.btcHoldings.toFixed(3);
+  document.getElementById('btc-dca-total').textContent = dcaTotal.toFixed(6);
+  document.getElementById('btc-total-holdings').textContent = totalBtc.toFixed(3);
+  document.getElementById('dca-spent').textContent = '$' + Math.round(dcaSpent).toLocaleString();
+  document.getElementById('dca-avg').textContent = dcaTotal > 0 ? '$' + Math.round(dcaSpent / dcaTotal).toLocaleString() : '--';
+  document.getElementById('btc-value-total').textContent = '$' + Math.round(totalBtc * state.btcPrice).toLocaleString();
+}
+
+function updateAlerts() {
+  const container = document.getElementById('alerts-container');
+  container.innerHTML = '';
+  const mnav = calcGrossMnav();
+  const s = state.settings;
+  const posVal = s.shares * state.mstrPrice;
+  const equity = posVal - s.margin;
+  const eqPct = equity / posVal;
+
+  if (eqPct < 0.45) {
+    container.innerHTML += `<div class="alert alert-danger"><span class="alert-icon">✕</span>MARGIN WARNING: Equity at ${(eqPct*100).toFixed(1)}% — approaching maintenance. Deposit cash or reduce position.</div>`;
+  }
+  if (mnav > 1.40) {
+    container.innerHTML += `<div class="alert alert-warn"><span class="alert-icon">⚠</span>mNAV at ${mnav.toFixed(2)}x — euphoric territory. All strikes at elevated assignment risk.</div>`;
+  }
+  if (state.btcPrice > 90000) {
+    container.innerHTML += `<div class="alert alert-warn"><span class="alert-icon">⚠</span>BTC above $90K — approaching strike zone. Monitor T5 delta closely.</div>`;
+  }
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+let scenarioChart, mnavChart;
+
+function initCharts() {
+  const sCtx = document.getElementById('scenarioChart');
+  if (!sCtx) return;
+
+  // Scenario projections with actual dates, $1.6M exit trigger
+  // Month 0 = current (Mar 29, 2026), Month 1 = Apr 2026, etc.
+  const labels = ['Now','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26','Nov 26','Dec 26','Jan 27','Feb 27','Mar 27','Apr 27','May 27','Jun 27','Jul 27','Aug 27','Sep 27','Oct 27','Nov 27'];
+  // S1: Range Apr-Jul, Rally Aug-Nov (EXIT ~Nov at $1.6M), Moon Dec+
+  const s1 = [869,900,840,870,925,1060,1210,1420,1610,1780,1980,2200,2410,2620,2840,3050,3260,3350,3420,3460,3500];
+  // S2: Crash Apr-Jun, Range Jul-Dec, Rally Jan+ (EXIT ~Apr 27 at $1.6M)
+  const s2 = [869,810,680,720,810,850,885,920,890,925,1070,1230,1410,1620,1790,1965,2155,2335,2500,2660,2810];
+  // S3: V-shape Apr→$250K Jan 27 (EXIT ~Aug at $1.6M), continues to $250K by Jan 2027
+  const s3 = [869,855,1020,1260,1540,1810,2050,2350,2680,3020,3180,null,null,null,null,null,null,null,null,null,null];
+  // $1.6M exit line
+  const exitLine = Array(21).fill(1600);
+
+  const actual = state.portfolioHistory.map(p => Math.round(p.value / 1000));
+  while (actual.length < 21) actual.push(null);
+
+  scenarioChart = new Chart(sCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'S1: Light Bear', data: s1, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,.05)', fill: true, tension: .3, borderWidth: 2, pointRadius: 0 },
+        { label: 'S2: Crash First', data: s2, borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,.05)', fill: true, tension: .3, borderWidth: 2, pointRadius: 0 },
+        { label: 'S3: V-Shape', data: s3, borderColor: '#b388ff', backgroundColor: 'rgba(179,136,255,.05)', fill: true, tension: .3, borderWidth: 2, pointRadius: 0, spanGaps: false },
+        { label: 'EXIT $1.6M', data: exitLine, borderColor: '#ff00ff', borderDash: [8,4], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: 'Actual', data: actual, borderColor: '#ffd700', backgroundColor: 'rgba(255,215,0,.1)', fill: true, tension: .3, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#ffd700' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#1a1a25', titleColor: '#e8e8f0', bodyColor: '#a0a0b0',
+        borderColor: '#2a2a3a', borderWidth: 1, padding: 10,
+        callbacks: { label: ctx => ctx.raw !== null ? ctx.dataset.label + ': $' + ctx.raw.toLocaleString() + 'K' : null }
+      }},
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#606070', font: { size: 10, family: 'Aptos, Segoe UI, sans-serif' } } },
+        y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#606070', font: { size: 10, family: 'Aptos, Segoe UI, sans-serif' }, callback: v => '$' + v + 'K' }, min: 500, max: 3600 }
+      }
+    }
+  });
+
+  // mNAV chart
+  const mCtx = document.getElementById('mnavChart');
+  const mnavLabels = state.mnavHistory.slice(-30).map(m => new Date(m.date).toLocaleDateString('en-US', {month:'short',day:'numeric'}));
+  const mnavData = state.mnavHistory.slice(-30).map(m => m.value);
+
+  mnavChart = new Chart(mCtx, {
+    type: 'line',
+    data: {
+      labels: mnavLabels.length > 0 ? mnavLabels : ['Today'],
+      datasets: [{
+        data: mnavData.length > 0 ? mnavData : [calcGrossMnav()],
+        borderColor: '#ffd700', backgroundColor: 'rgba(255,215,0,.08)', fill: true,
+        tension: .3, borderWidth: 2, pointRadius: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#606070', font: { size: 9 }, maxRotation: 45 } },
+        y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#606070', font: { size: 9 }, callback: v => v.toFixed(2) + 'x' } }
+      }
+    }
+  });
+}
+
+function recordDailySnapshot() {
+  const today = new Date().toISOString().split('T')[0];
+  const mnav = calcGrossMnav();
+  const pv = calcPortfolioValue();
+
+  // Only record once per day
+  const lastMnav = state.mnavHistory[state.mnavHistory.length - 1];
+  if (!lastMnav || lastMnav.date !== today) {
+    state.mnavHistory.push({ date: today, value: Math.round(mnav * 1000) / 1000 });
+    if (state.mnavHistory.length > 365) state.mnavHistory.shift();
+  }
+
+  const lastPort = state.portfolioHistory[state.portfolioHistory.length - 1];
+  if (!lastPort || lastPort.date !== today) {
+    state.portfolioHistory.push({ date: today, value: Math.round(pv.net) });
+    if (state.portfolioHistory.length > 365) state.portfolioHistory.shift();
+  }
+
+  saveState();
+
+  // Update mNAV panel
+  document.getElementById('mnav-current').textContent = mnav.toFixed(3) + 'x';
+  if (state.mnavHistory.length >= 7) {
+    const last7 = state.mnavHistory.slice(-7);
+    const avg7 = last7.reduce((s, m) => s + m.value, 0) / 7;
+    document.getElementById('mnav-7d').textContent = avg7.toFixed(3) + 'x';
+    const trend = mnav - avg7;
+    document.getElementById('mnav-trend').textContent = (trend >= 0 ? '+' : '') + trend.toFixed(3);
+    document.getElementById('mnav-trend').style.color = trend > 0.05 ? 'var(--orange)' : trend < -0.05 ? 'var(--green)' : 'var(--text2)';
+  }
+}
+
+// ============================================================
+// MODAL HANDLERS
+// ============================================================
+function openSettings() {
+  const s = state.settings;
+  document.getElementById('tradier-token').value = s.tradierToken || '';
+  document.getElementById('setting-shares').value = s.shares;
+  document.getElementById('setting-basis').value = s.basis;
+  document.getElementById('setting-cash').value = s.cash;
+  document.getElementById('setting-margin').value = s.margin;
+  document.getElementById('setting-btc').value = s.btcHoldings;
+  document.getElementById('setting-strat-btc').value = s.stratBtc;
+  document.getElementById('setting-strat-shares').value = s.stratShares;
+  document.getElementById('setting-strat-debt').value = s.stratDebt;
+  document.getElementById('setting-target').value = s.target;
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function saveSettings() {
+  state.settings.tradierToken = document.getElementById('tradier-token').value;
+  state.settings.shares = parseInt(document.getElementById('setting-shares').value);
+  state.settings.basis = parseFloat(document.getElementById('setting-basis').value);
+  state.settings.cash = parseFloat(document.getElementById('setting-cash').value);
+  state.settings.margin = parseFloat(document.getElementById('setting-margin').value);
+  state.settings.btcHoldings = parseFloat(document.getElementById('setting-btc').value);
+  state.settings.stratBtc = parseInt(document.getElementById('setting-strat-btc').value);
+  state.settings.stratShares = parseInt(document.getElementById('setting-strat-shares').value);
+  state.settings.stratDebt = parseInt(document.getElementById('setting-strat-debt').value);
+  state.settings.target = parseInt(document.getElementById('setting-target').value);
+  saveState();
+  closeSettings();
+  refreshAll();
+}
+
+function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+
+function openAddPosition() { document.getElementById('addPositionModal').classList.add('active'); }
+function closeAddPosition() { document.getElementById('addPositionModal').classList.remove('active'); }
+
+function savePosition() {
+  const pos = {
+    tranche: document.getElementById('pos-tranche').value,
+    strike: parseFloat(document.getElementById('pos-strike').value),
+    expiry: document.getElementById('pos-expiry').value,
+    contracts: parseInt(document.getElementById('pos-contracts').value),
+    premium: parseFloat(document.getElementById('pos-premium').value),
+    openDelta: 0.15
+  };
+  const existing = state.positions.findIndex(p => p.tranche === pos.tranche);
+  if (existing >= 0) state.positions[existing] = pos;
+  else state.positions.push(pos);
+  state.positions.sort((a, b) => a.strike - b.strike);
+  saveState();
+  closeAddPosition();
+  updateAll();
+}
+
+function openRollLog() {
+  renderRollLog();
+  document.getElementById('rollLogModal').classList.add('active');
+}
+function closeRollLog() { document.getElementById('rollLogModal').classList.remove('active'); }
+
+function saveRoll() {
+  const roll = {
+    date: document.getElementById('roll-date').value || new Date().toISOString().split('T')[0],
+    tranche: document.getElementById('roll-tranche').value,
+    credit: parseFloat(document.getElementById('roll-credit').value),
+    contracts: parseInt(document.getElementById('roll-contracts').value),
+    notes: document.getElementById('roll-notes').value
+  };
+  state.rolls.push(roll);
+  saveState();
+  renderRollLog();
+  updateAll();
+}
+
+function renderRollLog() {
+  const tbody = document.getElementById('roll-log-table');
+  tbody.innerHTML = '';
+  state.rolls.forEach((r, i) => {
+    const total = r.credit * r.contracts * 100;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.date}</td><td>${r.tranche}</td><td>$${r.credit.toFixed(2)}</td><td>${r.contracts}</td>
+      <td style="color:${total >= 0 ? 'var(--green)' : 'var(--red)'}">$${Math.round(total).toLocaleString()}</td>
+      <td style="font-size:10px;color:var(--text3)">${r.notes}</td>
+      <td><button class="danger" onclick="deleteRoll(${i})" style="font-size:10px;padding:2px 6px">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteRoll(i) { state.rolls.splice(i, 1); saveState(); renderRollLog(); updateAll(); }
+
+function openDcaLog() {
+  renderDcaLog();
+  document.getElementById('dcaLogModal').classList.add('active');
+}
+function closeDcaLog() { document.getElementById('dcaLogModal').classList.remove('active'); }
+
+function saveDca() {
+  const amount = parseFloat(document.getElementById('dca-amount').value);
+  const btcPrice = parseFloat(document.getElementById('dca-btc-price').value) || state.btcPrice;
+  const btcReceived = parseFloat(document.getElementById('dca-btc-received').value) || (amount / btcPrice);
+  state.dcaLog.push({
+    date: document.getElementById('dca-date').value || new Date().toISOString().split('T')[0],
+    amount, btcPrice, btcReceived
+  });
+  saveState();
+  renderDcaLog();
+  updateAll();
+}
+
+function renderDcaLog() {
+  const tbody = document.getElementById('dca-log-table');
+  tbody.innerHTML = '';
+  state.dcaLog.forEach((d, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${d.date}</td><td>$${d.amount}</td><td>$${Math.round(d.btcPrice).toLocaleString()}</td>
+      <td>${d.btcReceived.toFixed(6)}</td>
+      <td><button class="danger" onclick="deleteDca(${i})" style="font-size:10px;padding:2px 6px">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteDca(i) { state.dcaLog.splice(i, 1); saveState(); renderDcaLog(); updateAll(); }
+
+// ============================================================
+// STRATEGY.COM AUTO-FETCH (via CoinGecko Treasury API)
+// ============================================================
+async function fetchStrategyData() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/companies/public_treasury/bitcoin');
+    const data = await res.json();
+    if (data && data.companies) {
+      const strategy = data.companies.find(c =>
+        c.name === 'Strategy' || c.name === 'MicroStrategy' ||
+        (c.symbol && c.symbol.toUpperCase().includes('MSTR'))
+      );
+      if (strategy) {
+        state.settings.stratBtc = strategy.total_holdings;
+        // Derive shares outstanding from market cap / price if available
+        if (strategy.market_cap_dominance !== undefined) {
+          // CoinGecko doesn't give shares directly, keep existing or derive
+        }
+        console.log(`Strategy data updated: ${strategy.total_holdings.toLocaleString()} BTC`);
+        document.getElementById('strat-fetch-status').textContent =
+          'Updated ' + new Date().toLocaleTimeString();
+        document.getElementById('strat-fetch-status').style.color = 'var(--green)';
+        saveState();
+        return true;
+      }
+    }
+    return false;
+  } catch(e) {
+    console.error('Strategy fetch failed', e);
+    document.getElementById('strat-fetch-status').textContent = 'Fetch failed';
+    document.getElementById('strat-fetch-status').style.color = 'var(--red)';
+    return false;
+  }
+}
+
+// Also try to scrape strategy.com key metrics page via a CORS proxy fallback
+async function fetchStrategyDirect() {
+  // strategy.com blocks direct fetch, so we rely on CoinGecko as primary
+  // and allow manual override in settings as backup
+  return fetchStrategyData();
+}
+
+// ============================================================
+// OPTIONS CHAIN PANEL
+// ============================================================
+let fullChain = [];
+let chainExpiries = [];
+let showChainCalls = true, showChainPuts = true, showChainITM = false, showChainOTM = false;
+
+const fmtOpt = (v, d=2) => (v != null && !isNaN(v)) ? parseFloat(v).toFixed(d) : '—';
+const fmtOptK = v => (v != null && !isNaN(v)) ? parseInt(v).toLocaleString() : '—';
+const fmtOptPct = v => (v != null && !isNaN(v)) ? (parseFloat(v) * 100).toFixed(1) + '%' : '—';
+
+async function loadChainExpirations() {
+  if (!state.settings.tradierToken) return;
+  try {
+    const res = await fetch(
+      'https://api.tradier.com/v1/markets/options/expirations?symbol=MSTR&includeAllRoots=true',
+      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+    );
+    const data = await res.json();
+    chainExpiries = (data.expirations && data.expirations.date) || [];
+    const sel = document.getElementById('chainExpirySelect');
+    sel.innerHTML = '';
+
+    // Find next roll target: first expiry that's >= 25 DTE from now
+    // or the expiry matching current positions if rolling out
+    const posExpiries = [...new Set(state.positions.map(p => p.expiry))];
+    const now = new Date();
+
+    chainExpiries.forEach(dt => {
+      const dte = Math.round((new Date(dt) - now) / 86400000);
+      const opt = document.createElement('option');
+      opt.value = dt;
+      opt.textContent = `${dt}  (${dte}d)`;
+      // Auto-select: prefer next monthly ~30-45 DTE as roll target
+      if (dte >= 25 && dte <= 50 && !sel.value) opt.selected = true;
+      // Or select matching position expiry
+      if (posExpiries.includes(dt)) opt.className = 'pos-expiry';
+      sel.appendChild(opt);
+    });
+
+    // If nothing auto-selected, pick first expiry with 20+ DTE
+    if (!sel.value && chainExpiries.length > 0) {
+      const target = chainExpiries.find(dt => Math.round((new Date(dt) - now) / 86400000) >= 20);
+      if (target) sel.value = target;
+      else sel.value = chainExpiries[0];
+    }
+  } catch(e) {
+    console.error('Chain expirations fetch failed', e);
+  }
+}
+
+async function loadFullChain() {
+  const expiry = document.getElementById('chainExpirySelect').value;
+  if (!expiry || !state.settings.tradierToken) {
+    document.getElementById('chainWrap').innerHTML =
+      '<div class="chain-loading">Set Tradier API token in Settings and select an expiration</div>';
+    return;
+  }
+
+  document.getElementById('chainWrap').innerHTML =
+    '<div class="chain-loading"><span class="spin"></span> Fetching MSTR options chain from Tradier...</div>';
+
+  try {
+    const res = await fetch(
+      `https://api.tradier.com/v1/markets/options/chains?symbol=MSTR&expiration=${expiry}&greeks=true`,
+      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+    );
+    const data = await res.json();
+    const opts = (data.options && data.options.option) || [];
+
+    if (!opts.length) {
+      document.getElementById('chainWrap').innerHTML =
+        '<div class="chain-loading">No options found for this expiration. Try a different date.</div>';
+      return;
+    }
+
+    fullChain = opts;
+    renderFullChain(opts, expiry);
+    updateChainStats(opts, expiry);
+    document.getElementById('chainStatsBar').style.display = 'grid';
+  } catch(e) {
+    document.getElementById('chainWrap').innerHTML =
+      `<div class="chain-loading" style="color:var(--red)">Failed: ${e.message}</div>`;
+  }
+}
+
+function renderFullChain(opts, expiry) {
+  const strikes = [...new Set(opts.map(o => o.strike))].sort((a, b) => a - b);
+  const cMap = Object.fromEntries(opts.filter(o => o.option_type === 'call').map(o => [o.strike, o]));
+  const pMap = Object.fromEntries(opts.filter(o => o.option_type === 'put').map(o => [o.strike, o]));
+
+  const n = parseInt(document.getElementById('chainStrikeRange').value);
+  const price = state.mstrPrice;
+  const atm = strikes.reduce((a, b) => Math.abs(b - price) < Math.abs(a - price) ? b : a);
+  const ai = strikes.indexOf(atm);
+  let vis = strikes.slice(Math.max(0, ai - n), ai + n + 1);
+
+  if (showChainITM) vis = vis.filter(s => s < price);
+  if (showChainOTM) vis = vis.filter(s => s > price);
+
+  // Highlight strikes matching current positions
+  const posStrikes = new Set(state.positions.map(p => p.strike));
 
   let html = `
     <div class="sec-labels">
-      <div class="sec-lbl c">Calls</div>
+      <div class="sec-lbl c">CALLS</div>
       <div class="sec-lbl s">Strike</div>
-      <div class="sec-lbl p">Puts</div>
+      <div class="sec-lbl p">PUTS</div>
     </div>
     <div class="chain-head">
-      <div class="ch cc">Bid</div><div class="ch cc">Ask</div><div class="ch cc">Last</div>
-      <div class="ch cc">IV</div><div class="ch cc">Delta</div><div class="ch cc">OI / Vol</div>
-      <div class="ch sc">Strike</div>
-      <div class="ch pc">OI / Vol</div><div class="ch pc">Delta</div><div class="ch pc">IV</div>
-      <div class="ch pc">Last</div><div class="ch pc">Ask</div><div class="ch pc">Bid</div>
+      <div class="ch">Bid</div><div class="ch">Ask</div><div class="ch">Last</div>
+      <div class="ch">IV</div><div class="ch">Delta</div><div class="ch">OI/Vol</div>
+      <div class="ch">Strike</div>
+      <div class="ch">OI/Vol</div><div class="ch">Delta</div><div class="ch">IV</div>
+      <div class="ch">Last</div><div class="ch">Ask</div><div class="ch">Bid</div>
     </div>`;
 
   vis.forEach(sk => {
     const c = cMap[sk], p = pMap[sk];
-    const isATM = sk===atm, isIC = undly>sk, isIP = undly<sk;
+    const isATM = sk === atm;
+    const isIC = price > sk; // in-the-money call
+    const isPos = posStrikes.has(sk);
     let rc = 'chain-row';
-    if (isATM) rc+=' atm'; else if (isIC) rc+=' ic'; else if (isIP) rc+=' ip';
+    if (isATM) rc += ' atm';
+    else if (isIC) rc += ' ic';
+    else rc += ' ip';
 
-    const sLabel = isATM ? `$${sk}<span class="atm-b">ATM</span>` : `$${sk}`;
+    let sLabel = `$${sk}`;
+    if (isATM) sLabel += '<span class="atm-b">ATM</span>';
+    if (isPos) sLabel = `<span style="color:var(--orange)">★</span> $${sk}`;
 
-    const cHTML = sCalls&&c ? `
-      <div class="cell bid">${fmt(c.bid)}</div>
-      <div class="cell ask">${fmt(c.ask)}</div>
-      <div class="cell">${fmt(c.last)}</div>
-      <div class="cell iv">${pct(c.greeks?.mid_iv)}</div>
-      <div class="cell dl">${fmt(c.greeks?.delta,3)}</div>
-      <div class="cell oi">${fmtK(c.open_interest)}/${fmtK(c.volume)}</div>
+    const cHTML = showChainCalls && c ? `
+      <div class="cell bid">${fmtOpt(c.bid)}</div>
+      <div class="cell ask">${fmtOpt(c.ask)}</div>
+      <div class="cell">${fmtOpt(c.last)}</div>
+      <div class="cell iv">${fmtOptPct(c.greeks?.mid_iv)}</div>
+      <div class="cell dl">${fmtOpt(c.greeks?.delta, 3)}</div>
+      <div class="cell oi">${fmtOptK(c.open_interest)}/${fmtOptK(c.volume)}</div>
     ` : '<div class="cell mu">—</div>'.repeat(6);
 
-    const pHTML = sPuts&&p ? `
-      <div class="cell oi">${fmtK(p.open_interest)}/${fmtK(p.volume)}</div>
-      <div class="cell dl">${fmt(p.greeks?.delta,3)}</div>
-      <div class="cell iv">${pct(p.greeks?.mid_iv)}</div>
-      <div class="cell">${fmt(p.last)}</div>
-      <div class="cell ask">${fmt(p.ask)}</div>
-      <div class="cell bid">${fmt(p.bid)}</div>
+    const pHTML = showChainPuts && p ? `
+      <div class="cell oi">${fmtOptK(p.open_interest)}/${fmtOptK(p.volume)}</div>
+      <div class="cell dl">${fmtOpt(p.greeks?.delta, 3)}</div>
+      <div class="cell iv">${fmtOptPct(p.greeks?.mid_iv)}</div>
+      <div class="cell">${fmtOpt(p.last)}</div>
+      <div class="cell ask">${fmtOpt(p.ask)}</div>
+      <div class="cell bid">${fmtOpt(p.bid)}</div>
     ` : '<div class="cell mu">—</div>'.repeat(6);
 
-    html += `<div class="${rc}">${cHTML}<div class="cell sk ${isATM?'atm-s':''}">${sLabel}</div>${pHTML}</div>`;
+    html += `<div class="${rc}">${cHTML}<div class="cell sk${isATM ? ' atm-s' : ''}">${sLabel}</div>${pHTML}</div>`;
   });
 
   document.getElementById('chainWrap').innerHTML = html;
 }
 
-function updateStats(opts, expiry) {
-  const calls  = opts.filter(o=>o.option_type==='call');
-  const puts   = opts.filter(o=>o.option_type==='put');
-  const callOI = calls.reduce((s,o)=>s+(parseInt(o.open_interest)||0),0);
-  const putOI  = puts.reduce( (s,o)=>s+(parseInt(o.open_interest)||0),0);
-  const dte    = Math.round((new Date(expiry)-new Date())/86400000);
-  const strikes= [...new Set(opts.map(o=>o.strike))].sort((a,b)=>a-b);
-  const atm    = strikes.reduce((a,b)=>Math.abs(b-undly)<Math.abs(a-undly)?b:a);
-  const atmC   = calls.find(c=>c.strike===atm);
-  const atmIV  = atmC?.greeks?.mid_iv ? (parseFloat(atmC.greeks.mid_iv)*100).toFixed(1)+'%':'—';
+function updateChainStats(opts, expiry) {
+  const calls = opts.filter(o => o.option_type === 'call');
+  const puts = opts.filter(o => o.option_type === 'put');
+  const callOI = calls.reduce((s, o) => s + (parseInt(o.open_interest) || 0), 0);
+  const putOI = puts.reduce((s, o) => s + (parseInt(o.open_interest) || 0), 0);
+  const dte = Math.round((new Date(expiry) - new Date()) / 86400000);
+  const strikes = [...new Set(opts.map(o => o.strike))].sort((a, b) => a - b);
+  const atm = strikes.reduce((a, b) => Math.abs(b - state.mstrPrice) < Math.abs(a - state.mstrPrice) ? b : a);
+  const atmC = calls.find(c => c.strike === atm);
+  const atmIV = atmC?.greeks?.mid_iv ? (parseFloat(atmC.greeks.mid_iv) * 100).toFixed(1) + '%' : '—';
 
-  document.getElementById('sPrice').textContent  = `$${undly.toFixed(2)}`;
-  document.getElementById('sExpiry').textContent = expiry;
-  document.getElementById('sDTE').textContent    = `${dte}d`;
-  document.getElementById('sCallOI').textContent = callOI.toLocaleString();
-  document.getElementById('sPutOI').textContent  = putOI.toLocaleString();
-  document.getElementById('sPCR').textContent    = callOI>0?(putOI/callOI).toFixed(2):'—';
-  document.getElementById('sIV').textContent     = atmIV;
-  document.getElementById('sCnt').textContent    = opts.length.toLocaleString();
+  document.getElementById('csPrice').textContent = '$' + state.mstrPrice.toFixed(2);
+  document.getElementById('csExpiry').textContent = expiry;
+  document.getElementById('csDTE').textContent = dte + 'd';
+  document.getElementById('csCallOI').textContent = callOI.toLocaleString();
+  document.getElementById('csPutOI').textContent = putOI.toLocaleString();
+  document.getElementById('csPCR').textContent = callOI > 0 ? (putOI / callOI).toFixed(2) : '—';
+  document.getElementById('csATMIV').textContent = atmIV;
+  document.getElementById('csCnt').textContent = opts.length.toLocaleString();
 }
 
-function applyFilters() {
-  if (!chain.length) return;
-  const expiry = document.getElementById('expiryDate').value
-               || document.getElementById('expirySelect').value;
-  renderChain(chain, expiry);
+function onChainExpiryChange() { /* user changed dropdown, don't auto-load */ }
+function onChainRangeChange() {
+  document.getElementById('chainRangeVal').textContent = '±' + document.getElementById('chainStrikeRange').value;
+  if (fullChain.length) {
+    const expiry = document.getElementById('chainExpirySelect').value;
+    renderFullChain(fullChain, expiry);
+  }
 }
-function toggleCalls(){ sCalls=!sCalls; document.getElementById('tCalls').className='chip'+(sCalls?' on':''); applyFilters(); }
-function togglePuts() { sPuts =!sPuts;  document.getElementById('tPuts').className ='chip'+(sPuts ?' on':''); applyFilters(); }
-function toggleITM()  { sITM=!sITM; sOTM=false; document.getElementById('tITM').className='chip'+(sITM?' on':''); document.getElementById('tOTM').className='chip'; applyFilters(); }
-function toggleOTM()  { sOTM=!sOTM; sITM=false; document.getElementById('tOTM').className='chip'+(sOTM?' on':''); document.getElementById('tITM').className='chip'; applyFilters(); }
-function onDateChange()   { document.getElementById('expirySelect').value=''; }
-function onSelectChange() { document.getElementById('expiryDate').value=''; }
+function toggleChainCalls() { showChainCalls = !showChainCalls; document.getElementById('cCalls').className = 'chip' + (showChainCalls ? ' on' : ''); reRenderChain(); }
+function toggleChainPuts() { showChainPuts = !showChainPuts; document.getElementById('cPuts').className = 'chip' + (showChainPuts ? ' on' : ''); reRenderChain(); }
+function toggleChainITM() { showChainITM = !showChainITM; showChainOTM = false; document.getElementById('cITM').className = 'chip' + (showChainITM ? ' on' : ''); document.getElementById('cOTM').className = 'chip'; reRenderChain(); }
+function toggleChainOTM() { showChainOTM = !showChainOTM; showChainITM = false; document.getElementById('cOTM').className = 'chip' + (showChainOTM ? ' on' : ''); document.getElementById('cITM').className = 'chip'; reRenderChain(); }
+function reRenderChain() {
+  if (!fullChain.length) return;
+  const expiry = document.getElementById('chainExpirySelect').value;
+  renderFullChain(fullChain, expiry);
+}
 
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('expiryDate').valueAsDate = new Date();
-  fetchPrice();
-  loadExpirations();
-});
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function updateAll() {
+  updateTickers();
+  updatePortfolio();
+  updateMarginSafety();
+  updatePositions();
+  updateRollDecisions();
+  updateIncomeTracker();
+  updateBtcHoldings();
+  updateAlerts();
+}
+
+async function refreshAll() {
+  await fetchBtcPrice();
+  await fetchMstrPrice();
+  await fetchStrategyData();
+  await fetchAllOptionsChains();
+  await loadChainExpirations();
+  recordDailySnapshot();
+  updateAll();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleString('en-US', {
+    weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+  });
+}
+
+// Init
+loadState();
+updateClock();
+setInterval(updateClock, 1000);
+refreshAll();
+setInterval(refreshAll, 60000); // Refresh every 60 seconds
+initCharts();
 </script>
 </body>
 </html>
