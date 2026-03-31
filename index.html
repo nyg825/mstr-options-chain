@@ -605,25 +605,27 @@ let state = {
 };
 
 // Load from localStorage
+// IMPORTANT: Bump DATA_VERSION any time positions/rolls change in the HTML defaults
+const DATA_VERSION = 'v3-20260331';
+
 function loadState() {
   try {
     const saved = localStorage.getItem('mstr-options-desk');
     const version = localStorage.getItem('mstr-options-desk-version');
-    // Version 2: real data from 3/29/2026 screenshots
-    if (saved && version === 'v2') {
+    if (saved && version === DATA_VERSION) {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
     } else {
-      // First load with new data — clear old cache
+      // Version mismatch — clear stale cache, use fresh HTML defaults
       localStorage.removeItem('mstr-options-desk');
-      localStorage.setItem('mstr-options-desk-version', 'v2');
+      localStorage.setItem('mstr-options-desk-version', DATA_VERSION);
     }
   } catch(e) { console.error('Failed to load state', e); }
 }
 
 function saveState() {
   try {
-    localStorage.setItem('mstr-options-desk-version', 'v2');
+    localStorage.setItem('mstr-options-desk-version', DATA_VERSION);
     localStorage.setItem('mstr-options-desk', JSON.stringify({
       settings: state.settings, positions: state.positions,
       rolls: state.rolls, dcaLog: state.dcaLog,
