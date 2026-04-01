@@ -173,7 +173,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
   <div class="header">
     <div>
       <h1>MSTR OPTIONS DESK</h1>
-      <div class="subtitle">Mission Control — Covered Call Strategy Dashboard — Started March 17, 2026</div>
+      <div class="subtitle">Mission Control — Covered Call Strategy Dashboard — Started January 1, 2026</div>
     </div>
     <div class="header-right">
       <span class="header-time" id="clock"></span>
@@ -239,7 +239,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       </div>
       <div style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-          <span>Starting: $869,000 (Mar 17, 2026)</span><span id="port-gain-pct">--</span>
+          <span>Starting: $776,699 (Jan 1, 2026)</span><span id="port-gain-pct">--</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="port-progress" style="width:0%;background:var(--rust)"></div></div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
@@ -550,7 +550,7 @@ let state = {
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs', shares: 4000, basis: 140,
-    cash: 223486.55, margin: 216443.99,
+    cash: 206523.62, margin: 216443.99,
     marginRates: { above100k: 4.50, mid: 4.75, below50k: 4.90 },
     btcHoldings: 5.51830738, stratBtc: 762099, stratShares: 345084, stratDebt: 18263,
     stratPref: 10009, stratCash: 2250, stratEV: 59517,
@@ -597,7 +597,7 @@ let state = {
     { date: '2026-03-29', value: 1.18 }
   ],
   portfolioHistory: [
-    { date: '2026-03-17', value: 869000 },
+    { date: '2026-03-17', value: 776699 },
     { date: '2026-03-21', value: 860000 },
     { date: '2026-03-28', value: 848000 },
     { date: '2026-03-29', value: 843000 }
@@ -606,7 +606,7 @@ let state = {
 
 // Load from localStorage
 // IMPORTANT: Bump DATA_VERSION any time positions/rolls change in the HTML defaults
-const DATA_VERSION = 'v3-20260401';
+const DATA_VERSION = 'v3-20260401b';
 
 function loadState() {
   try {
@@ -863,8 +863,8 @@ function updatePortfolio() {
   document.getElementById('port-margin').textContent = '($' + Math.round(pv.margin).toLocaleString() + ')';
   document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
 
-  const gain = pv.net - 869000;
-  const gainPct = (gain / 869000 * 100).toFixed(1);
+  const gain = pv.net - 776699;
+  const gainPct = (gain / 776699 * 100).toFixed(1);
   document.getElementById('port-gain-pct').textContent = (gain >= 0 ? '+' : '') + '$' + Math.round(gain).toLocaleString() + ' (' + gainPct + '%)';
   document.getElementById('port-gain-pct').style.color = gain >= 0 ? 'var(--green)' : 'var(--red)';
   
