@@ -605,8 +605,23 @@ let state = {
 };
 
 // Load from localStorage
-// IMPORTANT: Bump DATA_VERSION any time positions/rolls change in the HTML defaults
-const DATA_VERSION = 'v3-20260401b';
+// Auto-detect when HTML defaults change by hashing the default state.
+// If the hash doesn't match what's cached, localStorage is stale → clear it.
+function hashDefaults() {
+  // Hash the parts of state that get edited in the HTML source
+  const key = JSON.stringify({
+    s: state.settings,
+    p: state.positions,
+    r: state.rolls
+  });
+  let h = 0;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) - h + key.charCodeAt(i)) | 0;
+  }
+  return 'auto-' + Math.abs(h).toString(36);
+}
+
+const DATA_VERSION = hashDefaults();
 
 function loadState() {
   try {
@@ -616,9 +631,10 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
     } else {
-      // Version mismatch — clear stale cache, use fresh HTML defaults
+      // Defaults changed since last visit — clear stale cache
       localStorage.removeItem('mstr-options-desk');
       localStorage.setItem('mstr-options-desk-version', DATA_VERSION);
+      console.log('Options Desk: defaults updated, cache cleared. Version:', DATA_VERSION);
     }
   } catch(e) { console.error('Failed to load state', e); }
 }
