@@ -562,7 +562,7 @@ let state = {
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs', shares: 4000, basis: 140,
-    cash: 189272.79, margin: 216443.99,
+    cash: 189273, margin: 216443.99,
     marginRates: { above100k: 4.50, mid: 4.75, below50k: 4.90 },
     btcHoldings: 5.53007986, stratBtc: 762099, stratShares: 345084, stratDebt: 18263,
     stratPref: 10009, stratCash: 2250, stratEV: 59517,
@@ -934,16 +934,20 @@ function updatePositions() {
   tbody.innerHTML = '';
   const iv = estimateIV();
   const colors = { T1: '#5E7B9B', T2: '#4A8B8C', T3: '#7B9464', T4: '#E8A84C', T5: '#D4845A' };
+  let totalPL = 0;
+  let anyLive = false;
 
   state.positions.forEach((pos, i) => {
     const dte = Math.max(0, Math.ceil((new Date(pos.expiry) - new Date()) / 86400000));
     const hasLive = pos.liveDelta !== undefined;
+    if (hasLive) anyLive = true;
     const delta = hasLive ? pos.liveDelta : estimateDelta(pos.strike, dte, iv);
     const posIV = hasLive && pos.liveIV ? (pos.liveIV * 100).toFixed(1) + '%' : iv.toFixed(0) + '%*';
     const otm = ((pos.strike - state.mstrPrice) / state.mstrPrice * 100);
     const btcBreach = btcToBreachStrike(pos.strike);
     const currentMid = hasLive ? pos.liveMid : (pos.currentPrice || null);
     const pl = currentMid ? (pos.premium - currentMid) * pos.contracts * 100 : 0;
+    totalPL += pl;
     const theta = hasLive && pos.liveTheta ? pos.liveTheta : 0;
 
     // Target deltas per tranche in 15Δ blended ladder
@@ -975,6 +979,17 @@ function updatePositions() {
     `;
     tbody.appendChild(tr);
   });
+
+  // Total P&L row
+  const totalTr = document.createElement('tr');
+  totalTr.style.borderTop = '2px solid var(--rust)';
+  totalTr.style.fontWeight = '700';
+  totalTr.innerHTML = `
+    <td colspan="8" style="text-align:right; color:var(--text-muted); padding-right:12px;">TOTAL P&L</td>
+    <td style="color:${totalPL >= 0 ? 'var(--green)' : 'var(--red)'}">$${Math.round(totalPL).toLocaleString()}${anyLive ? '' : '*'}</td>
+    <td></td>
+  `;
+  tbody.appendChild(totalTr);
 }
 
 function updateRollDecisions() {
