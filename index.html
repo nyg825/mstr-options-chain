@@ -1887,14 +1887,10 @@ function updateClock() {
 loadState();
 updateClock();
 setInterval(updateClock, 1000);
-// Ensure charts init after layout is stable
-requestAnimationFrame(() => {
-  initCharts();
-  refreshAll().then(() => {
-    // Re-render charts after live data arrives
-    if (scenarioChart) scenarioChart.update();
-    if (mnavChart) mnavChart.update();
-  });
+initCharts();
+refreshAll().then(() => {
+  if (scenarioChart) scenarioChart.resize();
+  if (mnavChart) mnavChart.resize();
 });
 setInterval(refreshAll, 60000);
 </script>
