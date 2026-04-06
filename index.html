@@ -92,7 +92,8 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 .alert-icon{font-size:14px;flex-shrink:0}
 
 /* Scenario chart area */
-.chart-container{position:relative;height:280px;margin-top:10px}
+.chart-container{position:relative;height:280px;margin-top:10px;width:100%}
+.chart-container canvas{display:block;width:100%!important;height:100%!important}
 
 /* Settings modal */
 .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,24,51,.85);z-index:100;align-items:center;justify-content:center}
@@ -1196,7 +1197,7 @@ function initCharts() {
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: 'index', intersect: false },
       plugins: { legend: { display: false }, tooltip: {
         backgroundColor: '#1E2C44', titleColor: '#F8FAFC', bodyColor: '#BFC7DA',
@@ -1261,7 +1262,7 @@ function initCharts() {
       }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false, animation: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { color: 'rgba(191,199,218,.06)' }, ticks: { color: '#94A3B8', font: { size: 9 }, maxRotation: 45 } },
@@ -1886,9 +1887,16 @@ function updateClock() {
 loadState();
 updateClock();
 setInterval(updateClock, 1000);
-refreshAll();
-setInterval(refreshAll, 60000); // Refresh every 60 seconds
-initCharts();
+// Ensure charts init after layout is stable
+requestAnimationFrame(() => {
+  initCharts();
+  refreshAll().then(() => {
+    // Re-render charts after live data arrives
+    if (scenarioChart) scenarioChart.update();
+    if (mnavChart) mnavChart.update();
+  });
+});
+setInterval(refreshAll, 60000);
 </script>
 </body>
 </html>
