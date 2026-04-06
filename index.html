@@ -552,7 +552,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -1152,17 +1152,6 @@ function initCharts() {
   const sCtx = document.getElementById('scenarioChart');
   if (!sCtx) return;
 
-  // Set explicit canvas dimensions from container to avoid Chart.js responsive/Grid issues
-  const sContainer = sCtx.parentElement;
-  sCtx.width = sContainer.clientWidth || 1200;
-  sCtx.height = sContainer.clientHeight || 280;
-  const mCtxEl = document.getElementById('mnavChart');
-  if (mCtxEl) {
-    const mContainer = mCtxEl.parentElement;
-    mCtxEl.width = mContainer.clientWidth || 600;
-    mCtxEl.height = mContainer.clientHeight || 180;
-  }
-
   // Scenario projections with actual dates, $1.6M exit trigger
   // Month 0 = current (Mar 29, 2026), Month 1 = Apr 2026, etc.
   const labels = ['Now','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26','Nov 26','Dec 26','Jan 27','Feb 27','Mar 27','Apr 27','May 27','Jun 27','Jul 27','Aug 27','Sep 27','Oct 27','Nov 27'];
@@ -1207,7 +1196,7 @@ function initCharts() {
       ]
     },
     options: {
-      responsive: false, maintainAspectRatio: false, animation: false,
+      responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: { legend: { display: false }, tooltip: {
         backgroundColor: '#1E2C44', titleColor: '#F8FAFC', bodyColor: '#BFC7DA',
@@ -1272,7 +1261,7 @@ function initCharts() {
       }]
     },
     options: {
-      responsive: false, maintainAspectRatio: false, animation: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { color: 'rgba(191,199,218,.06)' }, ticks: { color: '#94A3B8', font: { size: 9 }, maxRotation: 45 } },
