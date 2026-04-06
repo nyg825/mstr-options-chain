@@ -552,7 +552,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -1886,12 +1886,12 @@ function updateClock() {
 loadState();
 updateClock();
 setInterval(updateClock, 1000);
-initCharts();
-refreshAll().then(() => {
-  if (scenarioChart) scenarioChart.resize();
-  if (mnavChart) mnavChart.resize();
-});
+refreshAll();
 setInterval(refreshAll, 60000);
+// Charts must init after full page layout — DOMContentLoaded is too early
+window.addEventListener('load', function() {
+  initCharts();
+});
 </script>
 </body>
 </html>
