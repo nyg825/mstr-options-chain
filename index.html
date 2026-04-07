@@ -513,7 +513,7 @@ let state = {
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs', shares: 4000, basis: 140,
-    cash: 194581.06, margin: 216443.99,
+    cash: 194581.06, margin: 210817.29,
     marginRates: { above100k: 4.50, mid: 4.75, below50k: 4.90 },
     btcHoldings: 5.5358984, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
     stratPref: 10336, stratCash: 2250, stratEV: 60338,
@@ -521,11 +521,11 @@ let state = {
     target: 250000
   },
   positions: [
-    { tranche: 'T1', strike: 165, expiry: '2026-05-08', contracts: 8, premium: 1.68, openDelta: 0.13, currentPrice: 1.07 },
-    { tranche: 'T2', strike: 160, expiry: '2026-05-08', contracts: 8, premium: 2.14, openDelta: 0.16, currentPrice: 1.32 },
-    { tranche: 'T3', strike: 155, expiry: '2026-05-08', contracts: 8, premium: 2.68, openDelta: 0.19, currentPrice: 1.78 },
-    { tranche: 'T4', strike: 150, expiry: '2026-05-08', contracts: 8, premium: 3.47, openDelta: 0.23, currentPrice: 2.37 },
-    { tranche: 'T5', strike: 145, expiry: '2026-05-08', contracts: 8, premium: 4.36, openDelta: 0.28, currentPrice: 3.18 }
+    { tranche: 'T1', strike: 160, expiry: '2026-05-15', contracts: 8, premium: 0.89, openDelta: 0.13, currentPrice: 0 },
+    { tranche: 'T2', strike: 155, expiry: '2026-05-15', contracts: 8, premium: 1.15, openDelta: 0.16, currentPrice: 0 },
+    { tranche: 'T3', strike: 150, expiry: '2026-05-15', contracts: 8, premium: 1.41, openDelta: 0.19, currentPrice: 0 },
+    { tranche: 'T4', strike: 145, expiry: '2026-05-15', contracts: 8, premium: 1.60, openDelta: 0.23, currentPrice: 0 },
+    { tranche: 'T5', strike: 140, expiry: '2026-05-15', contracts: 8, premium: 1.97, openDelta: 0.28, currentPrice: 0 }
   ],
   rolls: [
     { date: '2026-03-17', tranche: 'T1', credit: 1.22, contracts: 8, notes: 'STO Apr24 $210 (10Δ ladder open)' },
@@ -543,7 +543,12 @@ let state = {
     { date: '2026-03-31', tranche: 'T2', credit: 1.32, contracts: 8, notes: 'Roll down+out $175→$160 May08 — credit $1.32' },
     { date: '2026-03-31', tranche: 'T3', credit: 1.77, contracts: 8, notes: 'Roll down+out $170→$155 May08 — credit $1.77' },
     { date: '2026-03-31', tranche: 'T4', credit: 2.25, contracts: 8, notes: 'Roll down+out $165→$150 May08 — credit $2.25' },
-    { date: '2026-03-31', tranche: 'T5', credit: 2.82, contracts: 8, notes: 'Roll down+out $160→$145 May08 — credit $2.82' }
+    { date: '2026-03-31', tranche: 'T5', credit: 2.82, contracts: 8, notes: 'Roll down+out $160→$145 May08 — credit $2.82' },
+    { date: '2026-04-07', tranche: 'T1', credit: 0.89, contracts: 8, notes: 'Roll down+out $165→$160 May15 — credit $0.89' },
+    { date: '2026-04-07', tranche: 'T2', credit: 1.15, contracts: 8, notes: 'Roll down+out $160→$155 May15 — credit $1.15' },
+    { date: '2026-04-07', tranche: 'T3', credit: 1.41, contracts: 8, notes: 'Roll down+out $155→$150 May15 — credit $1.41' },
+    { date: '2026-04-07', tranche: 'T4', credit: 1.60, contracts: 8, notes: 'Roll down+out $150→$145 May15 — credit $1.60' },
+    { date: '2026-04-07', tranche: 'T5', credit: 1.97, contracts: 8, notes: 'Roll down+out $145→$140 May15 — credit $1.97' }
   ],
   dcaLog: [],
   mnavHistory: [
