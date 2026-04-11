@@ -747,24 +747,9 @@ function calcGrossMnav() {
 }
 
 function calcMarginInterest() {
-  // Tiered margin rate: 4.50% above $100K, 4.75% $50-100K, 4.90% below $50K
-  const bal = state.settings.margin;
-  const r = state.settings.marginRates || { above100k: 4.50, mid: 4.75, below50k: 4.90 };
-  let annual = 0;
-  if (bal > 100000) {
-    annual += (bal - 100000) * (r.above100k / 100);
-    annual += 50000 * (r.mid / 100);
-    annual += 50000 * (r.below50k / 100);
-  } else if (bal > 50000) {
-    annual += (bal - 50000) * (r.mid / 100);
-    annual += 50000 * (r.below50k / 100);
-  } else {
-    annual += bal * (r.below50k / 100);
-  }
-  // Add BTC loan interest (flat rate, accrues indefinitely)
-  const btcLoanAnnual = (state.settings.btcLoan || 0) * ((state.settings.btcLoanRate || 0) / 100);
-  const totalAnnual = annual + btcLoanAnnual;
-  return { annual: Math.round(totalAnnual), monthly: Math.round(totalAnnual / 12), daily: Math.round(totalAnnual / 365) };
+  // Flat 4.50% on margin loan balance (Morpho accrues separately, not shown here)
+  const annual = state.settings.margin * 0.045;
+  return { annual: Math.round(annual), monthly: Math.round(annual / 12), daily: Math.round(annual / 365) };
 }
 
 function estimateIV() {
