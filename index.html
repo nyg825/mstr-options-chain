@@ -236,6 +236,8 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">BTC Holdings</div><div class="metric-value" id="port-btc">--</div></div>
 
         <div class="metric"><div class="metric-label">Margin</div><div class="metric-value down" id="port-margin">--</div></div>
+        <div class="metric"><div class="metric-label">BTC Loan</div><div class="metric-value down" id="port-btc-loan">--</div></div>
+        <div class="metric"><div class="metric-label">Total LTV</div><div class="metric-value" id="port-ltv">--</div></div>
         <div class="metric"><div class="metric-label">Net Portfolio</div><div class="metric-value" id="port-total" style="color:var(--rust)">--</div></div>
       </div>
       <div style="margin-top:12px">
@@ -513,9 +515,10 @@ let state = {
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs', shares: 4000, basis: 140,
-    cash: 183704.92, margin: 210817.29,
+    cash: 80761.07, margin: 210817.29,
+    btcLoan: 226933.38, btcLoanRate: 4.30,
     marginRates: { above100k: 4.50, mid: 4.75, below50k: 4.90 },
-    btcHoldings: 5.54148, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
+    btcHoldings: 10, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
     stratPref: 10336, stratCash: 2250, stratEV: 60338,
     stratMktCap: 44049, stratMnav: 1.13, stratIV: 75,
     target: 250000
@@ -734,7 +737,10 @@ function calcMarginInterest() {
   } else {
     annual += bal * (r.below50k / 100);
   }
-  return { annual: Math.round(annual), monthly: Math.round(annual / 12), daily: Math.round(annual / 365) };
+  // Add BTC loan interest (flat rate, accrues indefinitely)
+  const btcLoanAnnual = (state.settings.btcLoan || 0) * ((state.settings.btcLoanRate || 0) / 100);
+  const totalAnnual = annual + btcLoanAnnual;
+  return { annual: Math.round(totalAnnual), monthly: Math.round(totalAnnual / 12), daily: Math.round(totalAnnual / 365) };
 }
 
 function estimateIV() {
@@ -774,8 +780,10 @@ function calcPortfolioValue() {
   const dcaSpent = state.dcaLog.reduce((sum, d) => sum + d.amount, 0);
   const btcVal = (s.btcHoldings + dcaTotal) * state.btcPrice;
   const cashRemaining = s.cash + totalPremium - dcaSpent;
-  return { mstrVal, cashRemaining, btcVal, margin: s.margin, totalPremium, dcaTotal, dcaSpent,
-    net: mstrVal + cashRemaining + btcVal - s.margin };
+  const btcLoan = s.btcLoan || 0;
+  const totalDebt = s.margin + btcLoan;
+  return { mstrVal, cashRemaining, btcVal, margin: s.margin, btcLoan, totalDebt, totalPremium, dcaTotal, dcaSpent,
+    net: mstrVal + cashRemaining + btcVal - totalDebt };
 }
 
 function btcToBreachStrike(strike) {
@@ -822,7 +830,8 @@ function updateTickers() {
   document.getElementById('prem-pct').textContent = pctTarget + '% of $' + (state.settings.target/1000) + 'K';
   document.getElementById('prem-pct').className = 'ticker-change ' + (pv.totalPremium > state.settings.target * 0.5 ? 'up' : 'neutral');
 
-  document.getElementById('margin-bal').textContent = '$' + Math.round(state.settings.margin).toLocaleString();
+  const totalDebt = state.settings.margin + (state.settings.btcLoan || 0);
+  document.getElementById('margin-bal').textContent = '$' + Math.round(totalDebt).toLocaleString();
   const eqPct = ((state.settings.shares * state.mstrPrice - state.settings.margin) / (state.settings.shares * state.mstrPrice) * 100);
   document.getElementById('margin-equity').textContent = eqPct.toFixed(1) + '% equity';
   document.getElementById('margin-equity').className = 'ticker-change ' + (eqPct > 55 ? 'up' : eqPct > 45 ? 'neutral' : 'down');
@@ -834,6 +843,11 @@ function updatePortfolio() {
   document.getElementById('port-cash').textContent = '$' + Math.round(pv.cashRemaining).toLocaleString();
   document.getElementById('port-btc').textContent = '$' + Math.round(state.settings.btcHoldings * state.btcPrice).toLocaleString();
   document.getElementById('port-margin').textContent = '($' + Math.round(pv.margin).toLocaleString() + ')';
+  document.getElementById('port-btc-loan').textContent = '($' + Math.round(pv.btcLoan).toLocaleString() + ')';
+  const totalAssets = pv.mstrVal + pv.cashRemaining + pv.btcVal;
+  const ltv = totalAssets > 0 ? (pv.totalDebt / totalAssets * 100) : 0;
+  document.getElementById('port-ltv').textContent = ltv.toFixed(1) + '%';
+  document.getElementById('port-ltv').style.color = ltv > 50 ? 'var(--red)' : ltv > 35 ? 'var(--orange)' : 'var(--green)';
   document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
 
   const gain = pv.net - 776699;
