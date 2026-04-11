@@ -1119,6 +1119,7 @@ function initCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      animation: false,
       interaction: { mode: 'index', intersect: false },
       plugins: { legend: { display: false }, tooltip: {
         backgroundColor: '#1E2C44', titleColor: '#F8FAFC', bodyColor: '#BFC7DA',
@@ -1762,7 +1763,7 @@ window.addEventListener('load', function() {
   // Convert canvas to img to avoid Chrome canvas compositing issues
   setTimeout(function() {
     syncCanvasToImg('scenarioChart');
-  }, 200);
+  }, 500);
 });
 </script>
 </body>
