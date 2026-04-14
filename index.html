@@ -1257,7 +1257,7 @@ function initCharts() {
       scales: {
         x: { grid: { color: 'rgba(191,199,218,.06)' }, ticks: { color: '#94A3B8', font: { size: 10, family: 'Aptos, DM Sans, Segoe UI, sans-serif' } } },
         y: { position: 'left', grid: { color: 'rgba(191,199,218,.06)' }, ticks: { color: '#94A3B8', font: { size: 10, family: 'Aptos, DM Sans, Segoe UI, sans-serif' }, callback: v => '$' + v + 'K', stepSize: 100 }, min: 0, max: maxVal },
-        yBtc: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#F7931A', font: { size: 10, family: 'Aptos, DM Sans, Segoe UI, sans-serif' }, callback: v => '$' + v + 'K' }, min: 0, max: Math.ceil(Math.max(...s3Btc) / 50) * 50 }
+        yBtc: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#F7931A', font: { size: 10, family: 'Aptos, DM Sans, Segoe UI, sans-serif' }, callback: v => '$' + v + 'K', stepSize: 10 }, min: 0, max: Math.ceil(Math.max(...s3Btc) / 10) * 10 }
       }
     }
   });
