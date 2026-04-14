@@ -1166,19 +1166,23 @@ function initCharts() {
   const s = state.settings;
   const labels = ['Now','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26','Nov 26','Dec 26','Jan 27','Feb 27','Mar 27','Apr 27','May 27','Jun 27','Jul 27','Aug 27','Sep 27','Oct 27','Nov 27'];
 
+  // ── Live prices for "Now" column ──
+  const liveBtcK = Math.round(state.btcPrice / 1000);
+  const liveMstr = Math.round(state.mstrPrice);
+
   // ── Projected BTC prices ($K) per scenario ──
-  const s1Btc = [68,66,60,62,66,78,92,110,128,145,165,185,205,225,245,265,280,290,296,300,305];
-  const s2Btc = [68,58,42,48,58,62,65,68,64,68,82,98,115,135,150,168,185,200,215,230,245];
-  const s3Btc = [68,65,82,105,130,155,180,210,245,280,295,310,320,330,335,340,345,348,350,352,355];
+  const s1Btc = [liveBtcK,66,60,62,66,78,92,110,128,145,165,185,205,225,245,265,280,290,296,300,305];
+  const s2Btc = [liveBtcK,58,42,48,58,62,65,68,64,68,82,98,115,135,150,168,185,200,215,230,245];
+  const s3Btc = [liveBtcK,65,82,105,130,155,180,210,245,280,295,310,320,330,335,340,345,348,350,352,355];
 
   // ── Projected MSTR prices ($) per scenario ──
-  const s1Mstr = [125,120,108,112,122,148,178,218,256,295,340,385,430,475,520,560,595,620,635,645,655];
-  const s2Mstr = [125,105,72,82,105,112,118,124,116,124,155,190,225,270,305,345,385,420,455,490,525];
-  const s3Mstr = [125,118,155,205,260,320,380,450,530,615,650,685,715,740,760,775,790,800,808,815,820];
+  const s1Mstr = [liveMstr,120,108,112,122,148,178,218,256,295,340,385,430,475,520,560,595,620,635,645,655];
+  const s2Mstr = [liveMstr,105,72,82,105,112,118,124,116,124,155,190,225,270,305,345,385,420,455,490,525];
+  const s3Mstr = [liveMstr,118,155,205,260,320,380,450,530,615,650,685,715,740,760,775,790,800,808,815,820];
 
   // ── Compute portfolio values from projected prices ──
   // IBIT tracks BTC: ibitPrice ≈ btcPrice * ratio
-  const ibitRatio = 0.000566;
+  const ibitRatio = state.btcPrice > 0 ? state.ibitPrice / state.btcPrice : 0.000566;
   const totalDebt = s.margin + s.btcLoan;
   const fixedAssets = s.strcShares * 100 + s.cash - totalDebt; // STRC ~$100 par + cash - debt
 
@@ -1200,9 +1204,19 @@ function initCharts() {
 
   const exitLine = Array(21).fill(1800);
 
+  // ── Actual portfolio line: map history dates to month indices + live value ──
+  // Month 0 = Now (Apr 2026), Month 1 = May 2026, etc.
+  const baseDate = new Date(2026, 3, 1); // Apr 2026
+  const actual = Array(21).fill(null);
   const liveNet = calcPortfolioValue().net;
-  const actual = [Math.round(liveNet / 1000)];
-  while (actual.length < 21) actual.push(null);
+  actual[0] = Math.round(liveNet / 1000); // Always show live value at "Now"
+  state.portfolioHistory.forEach(p => {
+    const d = new Date(p.date);
+    const monthDiff = (d.getFullYear() - baseDate.getFullYear()) * 12 + (d.getMonth() - baseDate.getMonth());
+    if (monthDiff >= 1 && monthDiff < 21) {
+      actual[monthDiff] = Math.round(p.value / 1000);
+    }
+  });
 
   // Find max for Y-axis (round up to nearest 500K)
   const allVals = [...s1, ...s2, ...s3].filter(v => v !== null);
@@ -1217,7 +1231,7 @@ function initCharts() {
         { label: 'S2: Crash First', data: s2, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,.05)', fill: true, tension: .3, borderWidth: 2, pointRadius: 0 },
         { label: 'S3: V-Shape', data: s3, borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.05)', fill: true, tension: .3, borderWidth: 2, pointRadius: 0 },
         { label: 'EXIT $1.8M', data: exitLine, borderColor: '#E8935A', borderDash: [8,4], borderWidth: 1.5, pointRadius: 0, fill: false },
-        { label: 'Actual', data: actual, borderColor: '#C4581A', backgroundColor: 'rgba(196,88,26,.1)', fill: true, tension: .3, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#C4581A' }
+        { label: 'Actual', data: actual, borderColor: '#C4581A', backgroundColor: 'rgba(196,88,26,.1)', fill: true, tension: .3, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#C4581A', spanGaps: true }
       ]
     },
     options: {
@@ -1834,6 +1848,12 @@ function updateAll() {
   updatePositions();
   updateRollDecisions();
   updateAlerts();
+  // Rebuild chart with live prices
+  if (state.btcPrice > 0 && state.mstrPrice > 0) {
+    if (scenarioChart) scenarioChart.destroy();
+    initCharts();
+    setTimeout(function() { syncCanvasToImg('scenarioChart'); }, 500);
+  }
 }
 
 async function refreshAll() {
@@ -1874,11 +1894,10 @@ function syncCanvasToImg(canvasId) {
   img.src = canvas.toDataURL('image/png');
 }
 window.addEventListener('load', function() {
-  initCharts();
-  // Convert canvas to img to avoid Chrome canvas compositing issues
+  // Charts init deferred — rebuilt on each updateAll() after prices load
   setTimeout(function() {
     syncCanvasToImg('scenarioChart');
-  }, 500);
+  }, 2000);
 });
 </script>
 </body>
