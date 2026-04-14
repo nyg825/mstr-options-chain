@@ -292,24 +292,20 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">Excess</div><div class="metric-value" id="margin-excess">--</div></div>
         <div class="metric"><div class="metric-label">Monthly Interest</div><div class="metric-value" id="margin-interest">--</div></div>
       </div>
-      <div style="margin-top:12px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">MSTR price to margin call:</div>
-        <div style="font-family:var(--font-data);font-size:18px;font-weight:600" id="margin-call-price">--</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:8px">Distance to margin call:</div>
-        <div class="progress-bar"><div class="progress-fill" id="margin-progress" style="width:80%;background:var(--green)"></div></div>
+      <div style="margin-top:8px;display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:11px;color:var(--text3)">Margin call at:</span>
+        <span style="font-family:var(--font-data);font-size:16px;font-weight:600" id="margin-call-price">--</span>
       </div>
-    </div>
+      <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="margin-progress" style="width:80%;background:var(--green)"></div></div>
 
-    <!-- STRC Dividend -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">STRC Dividend — 11.5% Annual</span>
-        <span class="panel-badge badge-live">MONTHLY</span>
-      </div>
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Monthly Dividend</div><div class="metric-value" id="port-strf-div-mo" style="color:var(--green)">--</div></div>
-        <div class="metric"><div class="metric-label">Annual Dividend</div><div class="metric-value" id="port-strf-div-yr">--</div></div>
-        <div class="metric"><div class="metric-label">Next Payment</div><div class="metric-value" id="port-strf-div-next">--</div></div>
+      <!-- STRC Dividend (inside margin panel) -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--rust);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px">STRC Dividend — 11.5% Annual</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Monthly Dividend</div><div class="metric-value" id="port-strf-div-mo" style="color:var(--green)">--</div></div>
+          <div class="metric"><div class="metric-label">Annual Dividend</div><div class="metric-value" id="port-strf-div-yr">--</div></div>
+          <div class="metric"><div class="metric-label">Next Payment</div><div class="metric-value" id="port-strf-div-next">--</div></div>
+        </div>
       </div>
     </div>
 
