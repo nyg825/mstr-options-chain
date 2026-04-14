@@ -1200,7 +1200,8 @@ function initCharts() {
 
   const exitLine = Array(21).fill(1800);
 
-  const actual = state.portfolioHistory.map(p => Math.round(p.value / 1000));
+  const liveNet = calcPortfolioValue().net;
+  const actual = [Math.round(liveNet / 1000)];
   while (actual.length < 21) actual.push(null);
 
   // Find max for Y-axis (round up to nearest 500K)
