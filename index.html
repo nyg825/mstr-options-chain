@@ -994,8 +994,11 @@ function updateMarginSafety() {
   // Blended 60% maintenance on equity positions (MSTR elevated, IBIT/STRC standard)
   const maintenance = (pv.mstrVal + pv.ibitVal + pv.strcVal) * 0.60;
   const excess = equity - maintenance;
-  const nonMstrAssets = pv.ibitVal + pv.strcVal + pv.cashRemaining;
-  const callPrice = s.shares > 0 ? (s.margin * 1.667 - nonMstrAssets) / s.shares : 0;
+  // Margin call when equity = maintenance:
+  // (shares*P + ibitVal + strcVal + cash) - margin = (shares*P + ibitVal + strcVal) * 0.60
+  // 0.4*shares*P = margin - cash - 0.4*(ibitVal + strcVal)
+  const callNumerator = s.margin - pv.cashRemaining - 0.4 * (pv.ibitVal + pv.strcVal);
+  const callPrice = s.shares > 0 ? callNumerator / (0.4 * s.shares) : 0;
   const interest = calcMarginInterest();
 
   document.getElementById('margin-eq-pct').textContent = eqPct.toFixed(1) + '%';
@@ -1004,10 +1007,16 @@ function updateMarginSafety() {
   document.getElementById('margin-excess').style.color = excess > 50000 ? 'var(--green)' : excess > 0 ? 'var(--orange)' : 'var(--red)';
   document.getElementById('margin-interest').textContent = '$' + interest.monthly.toLocaleString() + '/mo';
   document.getElementById('margin-interest').style.color = 'var(--orange)';
-  document.getElementById('margin-call-price').textContent = '$' + callPrice.toFixed(2);
-  document.getElementById('margin-call-price').style.color = (state.mstrPrice - callPrice) / state.mstrPrice > 0.3 ? 'var(--green)' : 'var(--orange)';
 
-  const distPct = Math.min(100, Math.max(0, (state.mstrPrice - callPrice) / state.mstrPrice * 100));
+  if (callPrice <= 0) {
+    document.getElementById('margin-call-price').textContent = 'N/A — fully covered';
+    document.getElementById('margin-call-price').style.color = 'var(--green)';
+  } else {
+    document.getElementById('margin-call-price').textContent = '$' + callPrice.toFixed(2);
+    document.getElementById('margin-call-price').style.color = (state.mstrPrice - callPrice) / state.mstrPrice > 0.3 ? 'var(--green)' : 'var(--orange)';
+  }
+
+  const distPct = callPrice <= 0 ? 100 : Math.min(100, Math.max(0, (state.mstrPrice - callPrice) / state.mstrPrice * 100));
   document.getElementById('margin-progress').style.width = distPct + '%';
   document.getElementById('margin-progress').style.background = distPct > 40 ? 'var(--green)' : distPct > 20 ? 'var(--orange)' : 'var(--red)';
 }
