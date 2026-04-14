@@ -988,17 +988,18 @@ function updatePortfolio() {
 function updateMarginSafety() {
   const s = state.settings;
   const pv = calcPortfolioValue();
-  const posVal = pv.brokerageAssets;
+  // Securities only (no cash) for margin calculations
+  const posVal = pv.mstrVal + pv.ibitVal + pv.strcVal;
   const equity = posVal - s.margin;
   const eqPct = posVal > 0 ? equity / posVal * 100 : 0;
-  // Blended 60% maintenance on equity positions (MSTR elevated, IBIT/STRC standard)
-  const maintenance = (pv.mstrVal + pv.ibitVal + pv.strcVal) * 0.60;
+  // Maintenance: MSTR 40%, IBIT 40%, STRC 50%
+  const maintenance = pv.mstrVal * 0.40 + pv.ibitVal * 0.40 + pv.strcVal * 0.50;
   const excess = equity - maintenance;
   // Margin call when equity = maintenance:
-  // (shares*P + ibitVal + strcVal + cash) - margin = (shares*P + ibitVal + strcVal) * 0.60
-  // 0.4*shares*P = margin - cash - 0.4*(ibitVal + strcVal)
-  const callNumerator = s.margin - pv.cashRemaining - 0.4 * (pv.ibitVal + pv.strcVal);
-  const callPrice = s.shares > 0 ? callNumerator / (0.4 * s.shares) : 0;
+  // (shares*P + ibitVal + strcVal) - margin = shares*P*0.4 + ibitVal*0.4 + strcVal*0.5
+  // 0.6*shares*P = margin - 0.6*ibitVal - 0.5*strcVal
+  const callNumerator = s.margin - 0.6 * pv.ibitVal - 0.5 * pv.strcVal;
+  const callPrice = s.shares > 0 ? callNumerator / (0.6 * s.shares) : 0;
   const interest = calcMarginInterest();
 
   document.getElementById('margin-eq-pct').textContent = eqPct.toFixed(1) + '%';
