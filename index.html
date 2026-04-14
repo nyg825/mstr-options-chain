@@ -243,16 +243,16 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">IBIT (7,500 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
         <div class="metric"><div class="metric-label">IBIT Basis ($42.38/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
         <div class="metric"><div class="metric-label">IBIT P&L</div><div class="metric-value" id="port-ibit-pl">--</div></div>
-        <div class="metric"><div class="metric-label">STRF (1,100 sh)</div><div class="metric-value" id="port-strf">--</div></div>
-        <div class="metric"><div class="metric-label">STRF Basis ($100.01/sh)</div><div class="metric-value" id="port-strf-basis">--</div></div>
-        <div class="metric"><div class="metric-label">STRF P&L</div><div class="metric-value" id="port-strf-pl">--</div></div>
+        <div class="metric"><div class="metric-label">STRC (1,100 sh)</div><div class="metric-value" id="port-strf">--</div></div>
+        <div class="metric"><div class="metric-label">STRC Basis ($100.01/sh)</div><div class="metric-value" id="port-strf-basis">--</div></div>
+        <div class="metric"><div class="metric-label">STRC P&L</div><div class="metric-value" id="port-strf-pl">--</div></div>
         <div class="metric"><div class="metric-label">Margin Loan (4.5%)</div><div class="metric-value down" id="port-margin">--</div></div>
         <div class="metric"><div class="metric-label">Cash</div><div class="metric-value" id="port-cash">--</div></div>
         <div class="metric"><div class="metric-label">Brokerage LTV</div><div class="metric-value" id="port-brok-ltv">--</div></div>
       </div>
 
-      <!-- STRF Dividend -->
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:14px;margin-bottom:6px;padding-top:10px;border-top:1px solid var(--border)">STRF Dividend — 11.5% Annual</div>
+      <!-- STRC Dividend -->
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:14px;margin-bottom:6px;padding-top:10px;border-top:1px solid var(--border)">STRC Dividend — 11.5% Annual</div>
       <div class="metric-grid">
         <div class="metric"><div class="metric-label">Monthly Dividend</div><div class="metric-value" id="port-strf-div-mo" style="color:var(--green)">--</div></div>
         <div class="metric"><div class="metric-label">Annual Dividend</div><div class="metric-value" id="port-strf-div-yr">--</div></div>
@@ -470,11 +470,11 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <input type="number" id="setting-ibit-basis" value="317887.57" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
-      <label>STRF Shares</label>
+      <label>STRC Shares</label>
       <input type="number" id="setting-strf-shares" value="1100">
     </div>
     <div class="input-group" style="margin-bottom:12px">
-      <label>STRF Basis ($)</label>
+      <label>STRC Basis ($)</label>
       <input type="number" id="setting-strf-basis" value="110011" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
@@ -483,7 +483,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Cash on Hand ($)</label>
-      <input type="number" id="setting-cash" value="80761.07" step="0.01">
+      <input type="number" id="setting-cash" value="114201.07" step="0.01">
     </div>
     <div style="margin-bottom:12px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);margin-top:16px">
       <span style="font-size:11px;color:var(--btc);font-family:var(--font-data);text-transform:uppercase;letter-spacing:1px">BTC Holdings</span>
@@ -590,7 +590,7 @@ let state = {
     shares: 1200, mstrBasis: 175981.17,
     ibitShares: 7500, ibitBasis: 317887.57,
     strcShares: 1100, strcBasis: 110011, strcDivRate: 11.50, strcPar: 100,
-    cash: 80761.07, margin: 271752,
+    cash: 114201.07, margin: 271752,
     btcLoan: 226933.38, btcLoanRate: 4.30,
     btcCold: 5, btcCoinbase: 5, btcBasis: 521189.07,
     btcHoldings: 10, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
@@ -678,7 +678,7 @@ async function fetchEquityPrices() {
     return true;
   }
   try {
-    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=MSTR,IBIT,STRF', {
+    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=MSTR,IBIT,STRC', {
       headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' }
     });
     const data = await res.json();
@@ -689,7 +689,7 @@ async function fetchEquityPrices() {
         const price = q.last || q.close;
         if (sym === 'MSTR') { state.mstrPrev = q.prevclose; state.mstrPrice = price; }
         else if (sym === 'IBIT') { state.ibitPrice = price; }
-        else if (sym === 'STRF') { state.strcPrice = price; }
+        else if (sym === 'STRC') { state.strcPrice = price; }
       });
     }
     return true;
@@ -898,7 +898,7 @@ function updatePortfolio() {
   document.getElementById('port-ibit-pl').textContent = (ibitPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(ibitPL)).toLocaleString();
   document.getElementById('port-ibit-pl').style.color = ibitPL >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // ── Brokerage: STRF ──
+  // ── Brokerage: STRC ──
   const strfPL = pv.strcVal - s.strcBasis;
   document.getElementById('port-strf').textContent = '$' + Math.round(pv.strcVal).toLocaleString();
   document.getElementById('port-strf-basis').textContent = '$' + Math.round(s.strcBasis).toLocaleString();
@@ -912,7 +912,7 @@ function updatePortfolio() {
   document.getElementById('port-brok-ltv').textContent = brokLtv.toFixed(1) + '%';
   document.getElementById('port-brok-ltv').style.color = brokLtv > 50 ? 'var(--red)' : brokLtv > 35 ? 'var(--orange)' : 'var(--green)';
 
-  // ── STRF Dividend ──
+  // ── STRC Dividend ──
   const annualDiv = s.strcShares * s.strcDivRate;
   const monthlyDiv = annualDiv / 12;
   document.getElementById('port-strf-div-mo').textContent = '$' + Math.round(monthlyDiv).toLocaleString();
@@ -991,7 +991,8 @@ function updateMarginSafety() {
   const posVal = pv.brokerageAssets;
   const equity = posVal - s.margin;
   const eqPct = posVal > 0 ? equity / posVal * 100 : 0;
-  const maintenance = posVal * 0.4;
+  // Blended 60% maintenance on equity positions (MSTR elevated, IBIT/STRC standard)
+  const maintenance = (pv.mstrVal + pv.ibitVal + pv.strcVal) * 0.60;
   const excess = equity - maintenance;
   const nonMstrAssets = pv.ibitVal + pv.strcVal + pv.cashRemaining;
   const callPrice = s.shares > 0 ? (s.margin * 1.667 - nonMstrAssets) / s.shares : 0;
