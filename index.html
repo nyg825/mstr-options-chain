@@ -229,6 +229,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <div class="metric-grid">
         <div class="metric"><div class="metric-label">Total Assets</div><div class="metric-value" id="port-assets">--</div></div>
         <div class="metric"><div class="metric-label">Total Debt</div><div class="metric-value down" id="port-debt">--</div></div>
+        <div class="metric"><div class="metric-label">Open Options P&L</div><div class="metric-value" id="port-options-pl">--</div></div>
         <div class="metric"><div class="metric-label">Combined LTV</div><div class="metric-value" id="port-combined-ltv">--</div></div>
         <div class="metric"><div class="metric-label">Est. BTC Exposure</div><div class="metric-value" id="port-btc-exposure" style="color:var(--btc)">--</div></div>
         <div class="metric"><div class="metric-label">Net Value</div><div class="metric-value" id="port-total" style="color:var(--rust);font-size:24px">--</div></div>
@@ -255,7 +256,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px">Brokerage Account</div>
       <div class="metric-grid">
         <div class="metric"><div class="metric-label">MSTR (1,200 sh)</div><div class="metric-value" id="port-mstr">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR Basis ($146.65/sh)</div><div class="metric-value" id="port-mstr-basis">--</div></div>
+        <div class="metric"><div class="metric-label">MSTR Basis ($137.95/sh)</div><div class="metric-value" id="port-mstr-basis">--</div></div>
         <div class="metric"><div class="metric-label">MSTR P&L</div><div class="metric-value" id="port-mstr-pl">--</div></div>
         <div class="metric"><div class="metric-label">IBIT (7,500 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
         <div class="metric"><div class="metric-label">IBIT Basis ($42.38/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
@@ -437,7 +438,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>MSTR Basis ($)</label>
-      <input type="number" id="setting-mstr-basis" value="175981.17" step="0.01">
+      <input type="number" id="setting-mstr-basis" value="165540.66" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>IBIT Shares</label>
@@ -480,7 +481,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan ($)</label>
-      <input type="number" id="setting-btc-loan" value="226933.38" step="0.01">
+      <input type="number" id="setting-btc-loan" value="227053.72" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan Rate (%)</label>
@@ -565,11 +566,11 @@ let state = {
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs',
-    shares: 1200, mstrBasis: 175981.17,
+    shares: 1200, mstrBasis: 165540.66,
     ibitShares: 7500, ibitBasis: 317887.57,
     strcShares: 1100, strcBasis: 110011, strcDivRate: 11.50, strcPar: 100,
     cash: 114201.07, margin: 271752,
-    btcLoan: 226933.38, btcLoanRate: 4.30,
+    btcLoan: 227053.72, btcLoanRate: 4.30,
     btcCold: 5, btcCoinbase: 5, btcBasis: 521189.07,
     btcHoldings: 10, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
     stratPref: 10336, stratCash: 2250, stratEV: 60338,
@@ -802,9 +803,11 @@ function calcPortfolioValue() {
   const totalDebt = s.margin + btcLoan;
   const brokerageAssets = mstrVal + ibitVal + strcVal + cashRemaining;
   const totalAssets = brokerageAssets + btcVal;
+  // Estimated open options P&L (short calls: profit = (premium - currentPrice) * contracts * 100)
+  const optionsPL = state.positions.reduce((sum, p) => sum + ((p.premium - (p.currentPrice || 0)) * p.contracts * 100), 0);
   return { mstrVal, ibitVal, strcVal, cashRemaining, btcVal, margin: s.margin, btcLoan, totalDebt, totalPremium,
-    brokerageAssets, totalAssets, dcaTotal, dcaSpent,
-    net: totalAssets - totalDebt };
+    brokerageAssets, totalAssets, dcaTotal, dcaSpent, optionsPL,
+    net: totalAssets - totalDebt + optionsPL };
 }
 
 function btcToBreachStrike(strike) {
@@ -940,6 +943,9 @@ function updatePortfolio() {
   // ── Net Portfolio ──
   document.getElementById('port-assets').textContent = '$' + Math.round(pv.totalAssets).toLocaleString();
   document.getElementById('port-debt').textContent = '($' + Math.round(pv.totalDebt).toLocaleString() + ')';
+  const optEl = document.getElementById('port-options-pl');
+  optEl.textContent = (pv.optionsPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(pv.optionsPL)).toLocaleString();
+  optEl.style.color = pv.optionsPL >= 0 ? 'var(--green)' : 'var(--red)';
   const combinedLtv = pv.totalAssets > 0 ? (pv.totalDebt / pv.totalAssets * 100) : 0;
   document.getElementById('port-combined-ltv').textContent = combinedLtv.toFixed(1) + '%';
   document.getElementById('port-combined-ltv').style.color = combinedLtv > 40 ? 'var(--red)' : combinedLtv > 30 ? 'var(--orange)' : 'var(--green)';
