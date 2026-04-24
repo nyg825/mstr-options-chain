@@ -41,6 +41,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-primary);font
 .ticker::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .ticker.btc::before{background:var(--viz-amber)}
 .ticker.mstr::before{background:var(--blue)}
+.ticker.ibit::before{background:var(--orange)}
 .ticker.mnav::before{background:var(--rust)}
 .ticker.iv::before{background:var(--purple)}
 .ticker.prem::before{background:var(--green)}
@@ -107,9 +108,43 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 .metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 .metric-value{font-family:var(--font-display);font-size:16px;font-weight:700;margin-top:2px}
 
+/* Net Value Hero */
+.net-hero{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border2);border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
+.net-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--rust)}
+.net-hero-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.2em;font-weight:700;margin-bottom:6px}
+.net-hero-value{font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--rust);line-height:1}
+.net-hero-sub{font-size:12px;color:var(--text2);margin-top:6px;font-family:var(--font-data)}
+
 /* Responsive */
-@media(max-width:900px){.dashboard{grid-template-columns:1fr}.ticker-bar{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.ticker-bar{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){
+  .dashboard{grid-template-columns:1fr}
+  .ticker-bar{grid-template-columns:repeat(3,1fr)}
+  .metric-grid{grid-template-columns:repeat(2,1fr)}
+  .net-hero-value{font-size:34px}
+}
+@media(max-width:600px){
+  .app{padding:10px;padding-top:13px}
+  .ticker-bar{grid-template-columns:repeat(2,1fr)}
+  .ticker{padding:10px 12px}
+  .ticker-value{font-size:17px}
+  .header{flex-direction:column;align-items:flex-start;gap:10px}
+  .header h1{font-size:16px}
+  .header-right{flex-wrap:wrap;gap:10px}
+  .panel{padding:12px;min-height:0}
+  .panel-title{font-size:12px;letter-spacing:0.15em}
+  .metric{padding:8px}
+  .metric-value{font-size:14px}
+  .modal{width:95%;padding:16px;max-height:92vh;border-radius:12px}
+  .chain-stats{grid-template-columns:repeat(2,1fr)}
+  .net-hero{padding:16px;flex-direction:column;align-items:flex-start;gap:4px}
+  .net-hero-value{font-size:30px}
+  table{font-size:11px}
+  th,td{padding:4px}
+}
+@media(max-width:400px){
+  .ticker-bar{grid-template-columns:1fr}
+  .metric-grid{grid-template-columns:1fr}
+}
 
 /* Tranche colors — mapped to viz palette */
 .t1{color:var(--viz-slate)}.t2{color:var(--viz-teal)}.t3{color:var(--viz-sage)}.t4{color:var(--viz-amber)}.t5{color:var(--viz-copper)}
@@ -184,6 +219,15 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
   </div>
 
+  <!-- Net Value Hero -->
+  <div class="net-hero">
+    <div>
+      <div class="net-hero-label">Net Value</div>
+      <div class="net-hero-value" id="net-hero-value">--</div>
+      <div class="net-hero-sub" id="net-hero-sub">--</div>
+    </div>
+  </div>
+
   <!-- Price Ticker Bar -->
   <div class="ticker-bar">
     <div class="ticker btc">
@@ -195,6 +239,11 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <div class="ticker-label">MSTR</div>
       <div class="ticker-value" id="mstr-price">--</div>
       <div class="ticker-change neutral" id="mstr-change">loading...</div>
+    </div>
+    <div class="ticker ibit">
+      <div class="ticker-label">IBIT</div>
+      <div class="ticker-value" id="ibit-price">--</div>
+      <div class="ticker-change neutral" id="ibit-change">loading...</div>
     </div>
     <div class="ticker mnav">
       <div class="ticker-label">mNAV Multiple</div>
@@ -231,7 +280,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">Total Debt</div><div class="metric-value down" id="port-debt">--</div></div>
         <div class="metric"><div class="metric-label">Combined LTV</div><div class="metric-value" id="port-combined-ltv">--</div></div>
         <div class="metric"><div class="metric-label">Est. BTC Exposure</div><div class="metric-value" id="port-btc-exposure" style="color:var(--btc)">--</div></div>
-        <div class="metric"><div class="metric-label">Net Value</div><div class="metric-value" id="port-total" style="color:var(--rust);font-size:24px">--</div></div>
+        <div class="metric"><div class="metric-label">Net Value</div><div class="metric-value" id="port-total" style="color:var(--rust)">--</div></div>
       </div>
       <div style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
@@ -254,15 +303,12 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <!-- Brokerage Account -->
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px">Brokerage Account</div>
       <div class="metric-grid">
-        <div class="metric"><div class="metric-label">MSTR (0 sh)</div><div class="metric-value" id="port-mstr">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR Basis</div><div class="metric-value" id="port-mstr-basis">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR P&L</div><div class="metric-value" id="port-mstr-pl">--</div></div>
         <div class="metric"><div class="metric-label">IBIT (10,000 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
         <div class="metric"><div class="metric-label">IBIT Basis ($39.05/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
         <div class="metric"><div class="metric-label">IBIT P&L</div><div class="metric-value" id="port-ibit-pl">--</div></div>
-        <div class="metric"><div class="metric-label">STRC (0 sh)</div><div class="metric-value" id="port-strf">--</div></div>
-        <div class="metric"><div class="metric-label">STRC Basis</div><div class="metric-value" id="port-strf-basis">--</div></div>
-        <div class="metric"><div class="metric-label">STRC P&L</div><div class="metric-value" id="port-strf-pl">--</div></div>
+        <div class="metric"><div class="metric-label">MSTR (0 sh)</div><div class="metric-value" id="port-mstr">--</div></div>
+        <div class="metric"><div class="metric-label">MSTR Basis</div><div class="metric-value" id="port-mstr-basis">--</div></div>
+        <div class="metric"><div class="metric-label">MSTR P&L</div><div class="metric-value" id="port-mstr-pl">--</div></div>
         <div class="metric"><div class="metric-label">Margin Loan (4.75%)</div><div class="metric-value down" id="port-margin">--</div></div>
         <div class="metric"><div class="metric-label">Cash</div><div class="metric-value" id="port-cash">--</div></div>
         <div class="metric"><div class="metric-label">Brokerage LTV</div><div class="metric-value" id="port-brok-ltv">--</div></div>
@@ -298,16 +344,6 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <span style="font-family:var(--font-data);font-size:16px;font-weight:600" id="margin-call-price">--</span>
       </div>
       <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="margin-progress" style="width:80%;background:var(--green)"></div></div>
-
-      <!-- STRC Dividend (inside margin panel) -->
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--rust);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px">STRC Dividend — 11.5% Annual</div>
-        <div class="metric-grid">
-          <div class="metric"><div class="metric-label">Monthly Dividend</div><div class="metric-value" id="port-strf-div-mo" style="color:var(--green)">--</div></div>
-          <div class="metric"><div class="metric-label">Annual Dividend</div><div class="metric-value" id="port-strf-div-yr">--</div></div>
-          <div class="metric"><div class="metric-label">Next Payment</div><div class="metric-value" id="port-strf-div-next">--</div></div>
-        </div>
-      </div>
     </div>
 
     <!-- Panel 3: Active Positions -->
@@ -561,7 +597,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 // STATE
 // ============================================================
 let state = {
-  btcPrice: 0, mstrPrice: 0, ibitPrice: 0, strcPrice: 0, btcChange24h: 0, mstrPrev: 0,
+  btcPrice: 0, mstrPrice: 0, ibitPrice: 0, strcPrice: 0, btcChange24h: 0, mstrPrev: 0, ibitPrev: 0,
   liveOptions: {},
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs',
@@ -663,7 +699,7 @@ async function fetchEquityPrices() {
         const sym = q.symbol;
         const price = q.last || q.close;
         if (sym === 'MSTR') { state.mstrPrev = q.prevclose; state.mstrPrice = price; }
-        else if (sym === 'IBIT') { state.ibitPrice = price; }
+        else if (sym === 'IBIT') { state.ibitPrev = q.prevclose; state.ibitPrice = price; }
         else if (sym === 'STRC') { state.strcPrice = price; }
       });
     }
@@ -840,6 +876,12 @@ function updateTickers() {
   mstrEl.textContent = (mstrCh >= 0 ? '+' : '') + mstrCh.toFixed(2) + '%';
   mstrEl.className = 'ticker-change ' + (mstrCh >= 0 ? 'up' : 'down');
 
+  document.getElementById('ibit-price').textContent = '$' + state.ibitPrice.toFixed(2);
+  const ibitCh = state.ibitPrev ? ((state.ibitPrice - state.ibitPrev) / state.ibitPrev * 100) : 0;
+  const ibitEl = document.getElementById('ibit-change');
+  ibitEl.textContent = (ibitCh >= 0 ? '+' : '') + ibitCh.toFixed(2) + '%';
+  ibitEl.className = 'ticker-change ' + (ibitCh >= 0 ? 'up' : 'down');
+
   const mnav = calcGrossMnav();
   document.getElementById('mnav-value').textContent = mnav.toFixed(3) + 'x';
   const mnavZone = document.getElementById('mnav-zone');
@@ -883,29 +925,12 @@ function updatePortfolio() {
   document.getElementById('port-ibit-pl').textContent = (ibitPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(ibitPL)).toLocaleString();
   document.getElementById('port-ibit-pl').style.color = ibitPL >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // ── Brokerage: STRC ──
-  const strfPL = pv.strcVal - s.strcBasis;
-  document.getElementById('port-strf').textContent = '$' + Math.round(pv.strcVal).toLocaleString();
-  document.getElementById('port-strf-basis').textContent = '$' + Math.round(s.strcBasis).toLocaleString();
-  document.getElementById('port-strf-pl').textContent = (strfPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(strfPL)).toLocaleString();
-  document.getElementById('port-strf-pl').style.color = strfPL >= 0 ? 'var(--green)' : 'var(--red)';
-
   // ── Brokerage: Margin, Cash, LTV ──
   document.getElementById('port-margin').textContent = '($' + Math.round(s.margin).toLocaleString() + ')';
   document.getElementById('port-cash').textContent = '$' + Math.round(pv.cashRemaining).toLocaleString();
   const brokLtv = pv.brokerageAssets > 0 ? (s.margin / pv.brokerageAssets * 100) : 0;
   document.getElementById('port-brok-ltv').textContent = brokLtv.toFixed(1) + '%';
   document.getElementById('port-brok-ltv').style.color = brokLtv > 50 ? 'var(--red)' : brokLtv > 35 ? 'var(--orange)' : 'var(--green)';
-
-  // ── STRC Dividend ──
-  const annualDiv = s.strcShares * s.strcDivRate;
-  const monthlyDiv = annualDiv / 12;
-  document.getElementById('port-strf-div-mo').textContent = '$' + Math.round(monthlyDiv).toLocaleString();
-  document.getElementById('port-strf-div-yr').textContent = '$' + Math.round(annualDiv).toLocaleString();
-  const now = new Date();
-  let nextPay = new Date(now.getFullYear(), now.getMonth(), 30);
-  if (nextPay <= now) nextPay = new Date(now.getFullYear(), now.getMonth() + 1, 30);
-  document.getElementById('port-strf-div-next').textContent = nextPay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   // ── BTC Section ──
   const btcColdVal = s.btcCold * state.btcPrice;
@@ -963,11 +988,16 @@ function updatePortfolio() {
   document.getElementById('port-btc-exposure').textContent = totalBtcExposure.toFixed(1) + ' BTC (~$' + Math.round(totalBtcExposure * state.btcPrice / 1000).toLocaleString() + 'K)';
 
   document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
+  document.getElementById('net-hero-value').textContent = '$' + Math.round(pv.net).toLocaleString();
 
   const gain = pv.net - 670038;
   const gainPct = (gain / 670038 * 100).toFixed(1);
-  document.getElementById('port-gain-pct').textContent = (gain >= 0 ? '+' : '') + '$' + Math.round(gain).toLocaleString() + ' (' + gainPct + '%)';
+  const gainTxt = (gain >= 0 ? '+' : '') + '$' + Math.round(gain).toLocaleString() + ' (' + gainPct + '%)';
+  document.getElementById('port-gain-pct').textContent = gainTxt;
   document.getElementById('port-gain-pct').style.color = gain >= 0 ? 'var(--green)' : 'var(--red)';
+  const heroSub = document.getElementById('net-hero-sub');
+  heroSub.textContent = gainTxt + ' since Jan 1, 2023';
+  heroSub.style.color = gain >= 0 ? 'var(--green)' : 'var(--red)';
 
   // Progress toward $1.8M exit
   const exitTarget = 1800000;
