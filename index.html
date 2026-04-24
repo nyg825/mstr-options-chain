@@ -258,12 +258,12 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">MSTR Basis</div><div class="metric-value" id="port-mstr-basis">--</div></div>
         <div class="metric"><div class="metric-label">MSTR P&L</div><div class="metric-value" id="port-mstr-pl">--</div></div>
         <div class="metric"><div class="metric-label">IBIT (10,000 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
-        <div class="metric"><div class="metric-label">IBIT Basis ($33.90/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
+        <div class="metric"><div class="metric-label">IBIT Basis ($39.05/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
         <div class="metric"><div class="metric-label">IBIT P&L</div><div class="metric-value" id="port-ibit-pl">--</div></div>
-        <div class="metric"><div class="metric-label">STRC (1,100 sh)</div><div class="metric-value" id="port-strf">--</div></div>
-        <div class="metric"><div class="metric-label">STRC Basis ($100.01/sh)</div><div class="metric-value" id="port-strf-basis">--</div></div>
+        <div class="metric"><div class="metric-label">STRC (0 sh)</div><div class="metric-value" id="port-strf">--</div></div>
+        <div class="metric"><div class="metric-label">STRC Basis</div><div class="metric-value" id="port-strf-basis">--</div></div>
         <div class="metric"><div class="metric-label">STRC P&L</div><div class="metric-value" id="port-strf-pl">--</div></div>
-        <div class="metric"><div class="metric-label">Margin Loan (4.5%)</div><div class="metric-value down" id="port-margin">--</div></div>
+        <div class="metric"><div class="metric-label">Margin Loan (4.75%)</div><div class="metric-value down" id="port-margin">--</div></div>
         <div class="metric"><div class="metric-label">Cash</div><div class="metric-value" id="port-cash">--</div></div>
         <div class="metric"><div class="metric-label">Brokerage LTV</div><div class="metric-value" id="port-brok-ltv">--</div></div>
       </div>
@@ -445,15 +445,15 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>IBIT Basis ($)</label>
-      <input type="number" id="setting-ibit-basis" value="338990.33" step="0.01">
+      <input type="number" id="setting-ibit-basis" value="390456.41" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>STRC Shares</label>
-      <input type="number" id="setting-strf-shares" value="1100">
+      <input type="number" id="setting-strf-shares" value="0">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>STRC Basis ($)</label>
-      <input type="number" id="setting-strf-basis" value="110011" step="0.01">
+      <input type="number" id="setting-strf-basis" value="0" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Margin Balance ($)</label>
@@ -566,8 +566,8 @@ let state = {
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs',
     shares: 0, mstrBasis: 0,
-    ibitShares: 10000, ibitBasis: 338990.33,
-    strcShares: 1100, strcBasis: 110011, strcDivRate: 11.50, strcPar: 100,
+    ibitShares: 10000, ibitBasis: 390456.41,
+    strcShares: 0, strcBasis: 0, strcDivRate: 11.50, strcPar: 100,
     cash: 112279.14, margin: 92021.52,
     btcLoan: 227321.09, btcLoanRate: 4.79,
     btcCold: 5, btcCoinbase: 5, btcBasis: 521189.07,
@@ -751,8 +751,8 @@ function calcGrossMnav() {
 }
 
 function calcMarginInterest() {
-  // Flat 4.50% on margin loan balance (Morpho accrues separately, not shown here)
-  const annual = state.settings.margin * 0.045;
+  // Flat 4.75% on margin loan balance (Morpho accrues separately, not shown here)
+  const annual = state.settings.margin * 0.0475;
   return { annual: Math.round(annual), monthly: Math.round(annual / 12), daily: Math.round(annual / 365) };
 }
 
