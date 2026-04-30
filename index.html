@@ -289,6 +289,8 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">Total Debt</div><div class="metric-value down" id="port-debt">--</div></div>
         <div class="metric"><div class="metric-label">Combined LTV</div><div class="metric-value" id="port-combined-ltv">--</div></div>
         <div class="metric"><div class="metric-label">Est. BTC Exposure</div><div class="metric-value" id="port-btc-exposure" style="color:var(--btc)">--</div></div>
+        <div class="metric"><div class="metric-label">BTC Exposure Basis</div><div class="metric-value" id="port-btc-basis-total">--</div></div>
+        <div class="metric"><div class="metric-label">BTC Exposure P&L</div><div class="metric-value" id="port-btc-exposure-pl">--</div></div>
         <div class="metric"><div class="metric-label">Net Value</div><div class="metric-value" id="port-total" style="color:var(--rust)">--</div></div>
       </div>
       <div style="margin-top:12px">
@@ -1051,6 +1053,17 @@ function updatePortfolio() {
   const ibitBtcEquiv = state.btcPrice > 0 ? pv.ibitVal / state.btcPrice : 0;
   const totalBtcExposure = s.btcHoldings + mstrBtcEquiv + leapBtcEquiv + ibitBtcEquiv;
   document.getElementById('port-btc-exposure').textContent = totalBtcExposure.toFixed(2) + ' BTC (~$' + Math.round(totalBtcExposure * state.btcPrice / 1000).toLocaleString() + 'K)';
+
+  // BTC Exposure Basis: sum of cost bases for everything that gives BTC exposure
+  const leapBasisTotal = (s.leaps || []).reduce((sum, l) => sum + (l.basis || 0), 0);
+  const btcExposureBasis = s.btcBasis + s.ibitBasis + s.mstrBasis + leapBasisTotal;
+  const btcExposureMarketVal = pv.btcVal + pv.ibitVal + pv.mstrVal + pv.leapVal;
+  const btcExposurePL = btcExposureMarketVal - btcExposureBasis;
+  const btcExposurePLPct = btcExposureBasis > 0 ? (btcExposurePL / btcExposureBasis * 100) : 0;
+  document.getElementById('port-btc-basis-total').textContent = '$' + Math.round(btcExposureBasis).toLocaleString();
+  const plEl = document.getElementById('port-btc-exposure-pl');
+  plEl.textContent = (btcExposurePL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(btcExposurePL)).toLocaleString() + ' (' + (btcExposurePL >= 0 ? '+' : '') + btcExposurePLPct.toFixed(1) + '%)';
+  plEl.style.color = btcExposurePL >= 0 ? 'var(--green)' : 'var(--red)';
 
   document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
   document.getElementById('net-hero-value').textContent = '$' + Math.round(pv.net).toLocaleString();
