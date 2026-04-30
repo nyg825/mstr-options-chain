@@ -36,7 +36,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-primary);font
 .header-time{font-family:var(--font-data);font-size:13px;color:var(--text2)}
 
 /* Price Ticker Bar */
-.ticker-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+.ticker-bar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px}
 .ticker{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
 .ticker::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .ticker.btc::before{background:var(--viz-amber)}
@@ -44,6 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-primary);font
 .ticker.ibit::before{background:var(--orange)}
 .ticker.mnav::before{background:var(--rust)}
 .ticker.iv::before{background:var(--purple)}
+.ticker.leap::before{background:var(--purple)}
 .ticker.prem::before{background:var(--green)}
 .ticker.margin::before{background:var(--red)}
 .ticker-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:600}
@@ -116,6 +117,9 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 .net-hero-sub{font-size:12px;color:var(--text2);margin-top:6px;font-family:var(--font-data)}
 
 /* Responsive */
+@media(max-width:1100px){
+  .ticker-bar{grid-template-columns:repeat(4,1fr)}
+}
 @media(max-width:900px){
   .dashboard{grid-template-columns:1fr}
   .ticker-bar{grid-template-columns:repeat(3,1fr)}
@@ -250,10 +254,15 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <div class="ticker-value" id="mnav-value">--</div>
       <div class="ticker-change neutral" id="mnav-zone">--</div>
     </div>
-    <div class="ticker iv">
-      <div class="ticker-label">ATM IV (est)</div>
-      <div class="ticker-value" id="iv-value">--</div>
-      <div class="ticker-change neutral" id="iv-env">--</div>
+    <div class="ticker leap">
+      <div class="ticker-label">MSTR $170 LEAP</div>
+      <div class="ticker-value" id="leap170-value">--</div>
+      <div class="ticker-change neutral" id="leap170-pl">--</div>
+    </div>
+    <div class="ticker leap">
+      <div class="ticker-label">MSTR $200 LEAP</div>
+      <div class="ticker-value" id="leap200-value">--</div>
+      <div class="ticker-change neutral" id="leap200-pl">--</div>
     </div>
     <div class="ticker margin">
       <div class="ticker-label">Margin Balance</div>
@@ -303,12 +312,15 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <!-- Brokerage Account -->
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px">Brokerage Account</div>
       <div class="metric-grid">
-        <div class="metric"><div class="metric-label">IBIT (10,000 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
-        <div class="metric"><div class="metric-label">IBIT Basis ($39.05/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
+        <div class="metric"><div class="metric-label">IBIT (8,802 sh)</div><div class="metric-value" id="port-ibit">--</div></div>
+        <div class="metric"><div class="metric-label">IBIT Basis ($38.51/sh)</div><div class="metric-value" id="port-ibit-basis">--</div></div>
         <div class="metric"><div class="metric-label">IBIT P&L</div><div class="metric-value" id="port-ibit-pl">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR (0 sh)</div><div class="metric-value" id="port-mstr">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR Basis</div><div class="metric-value" id="port-mstr-basis">--</div></div>
-        <div class="metric"><div class="metric-label">MSTR P&L</div><div class="metric-value" id="port-mstr-pl">--</div></div>
+        <div class="metric"><div class="metric-label">$170 LEAP (5 ct)</div><div class="metric-value" id="port-leap170">--</div></div>
+        <div class="metric"><div class="metric-label">$170 LEAP Basis</div><div class="metric-value" id="port-leap170-basis">--</div></div>
+        <div class="metric"><div class="metric-label">$170 LEAP P&L</div><div class="metric-value" id="port-leap170-pl">--</div></div>
+        <div class="metric"><div class="metric-label">$200 LEAP (5 ct)</div><div class="metric-value" id="port-leap200">--</div></div>
+        <div class="metric"><div class="metric-label">$200 LEAP Basis</div><div class="metric-value" id="port-leap200-basis">--</div></div>
+        <div class="metric"><div class="metric-label">$200 LEAP P&L</div><div class="metric-value" id="port-leap200-pl">--</div></div>
         <div class="metric"><div class="metric-label">Margin Loan (4.75%)</div><div class="metric-value down" id="port-margin">--</div></div>
         <div class="metric"><div class="metric-label">Cash</div><div class="metric-value" id="port-cash">--</div></div>
         <div class="metric"><div class="metric-label">Brokerage LTV</div><div class="metric-value" id="port-brok-ltv">--</div></div>
@@ -468,20 +480,38 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <span style="font-size:11px;color:var(--btc);font-family:var(--font-data);text-transform:uppercase;letter-spacing:1px">Brokerage Account</span>
     </div>
     <div class="input-group" style="margin-bottom:12px">
-      <label>MSTR Shares</label>
-      <input type="number" id="setting-shares" value="0">
-    </div>
-    <div class="input-group" style="margin-bottom:12px">
-      <label>MSTR Basis ($)</label>
-      <input type="number" id="setting-mstr-basis" value="0" step="0.01">
-    </div>
-    <div class="input-group" style="margin-bottom:12px">
       <label>IBIT Shares</label>
-      <input type="number" id="setting-ibit-shares" value="10000">
+      <input type="number" id="setting-ibit-shares" value="8802">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>IBIT Basis ($)</label>
-      <input type="number" id="setting-ibit-basis" value="390456.41" step="0.01">
+      <input type="number" id="setting-ibit-basis" value="338990.33" step="0.01">
+    </div>
+    <div style="margin:12px 0 8px;font-size:11px;color:var(--rust);text-transform:uppercase;letter-spacing:0.15em;font-weight:700">MSTR $170 LEAP (Dec 15 '28)</div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Contracts</label>
+      <input type="number" id="setting-leap170-contracts" value="5">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Basis ($)</label>
+      <input type="number" id="setting-leap170-basis" value="41864.32" step="0.01">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Delta (per share, 0–1)</label>
+      <input type="number" id="setting-leap170-delta" value="0.703" step="0.001">
+    </div>
+    <div style="margin:12px 0 8px;font-size:11px;color:var(--rust);text-transform:uppercase;letter-spacing:0.15em;font-weight:700">MSTR $200 LEAP (Dec 15 '28)</div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Contracts</label>
+      <input type="number" id="setting-leap200-contracts" value="5">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Basis ($)</label>
+      <input type="number" id="setting-leap200-basis" value="38499.31" step="0.01">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Delta (per share, 0–1)</label>
+      <input type="number" id="setting-leap200-delta" value="0.577" step="0.001">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>STRC Shares</label>
@@ -493,11 +523,11 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Margin Balance ($)</label>
-      <input type="number" id="setting-margin" value="92021.52" step="0.01">
+      <input type="number" id="setting-margin" value="120351.34" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Cash on Hand ($)</label>
-      <input type="number" id="setting-cash" value="107944.52" step="0.01">
+      <input type="number" id="setting-cash" value="123595.63" step="0.01">
     </div>
     <div style="margin-bottom:12px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);margin-top:16px">
       <span style="font-size:11px;color:var(--btc);font-family:var(--font-data);text-transform:uppercase;letter-spacing:1px">BTC Holdings</span>
@@ -516,7 +546,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan ($)</label>
-      <input type="number" id="setting-btc-loan" value="227321.09" step="0.01">
+      <input type="number" id="setting-btc-loan" value="227312.09" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan Rate (%)</label>
@@ -599,13 +629,18 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 let state = {
   btcPrice: 0, mstrPrice: 0, ibitPrice: 0, strcPrice: 0, btcChange24h: 0, mstrPrev: 0, ibitPrev: 0,
   liveOptions: {},
+  leapPrices: { '170': 0, '200': 0 },
   settings: {
     tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs',
     shares: 0, mstrBasis: 0,
-    ibitShares: 10000, ibitBasis: 390456.41,
+    ibitShares: 8802, ibitBasis: 338990.33,
     strcShares: 0, strcBasis: 0, strcDivRate: 11.50, strcPar: 100,
-    cash: 107944.52, margin: 92021.52,
-    btcLoan: 227321.09, btcLoanRate: 4.79,
+    cash: 123595.63, margin: 120351.34,
+    leaps: [
+      { strike: 170, expiry: '2028-12-15', contracts: 5, basis: 41864.32, delta: 0.703, occ: 'MSTR281215C00170000' },
+      { strike: 200, expiry: '2028-12-15', contracts: 5, basis: 38499.31, delta: 0.577, occ: 'MSTR281215C00200000' }
+    ],
+    btcLoan: 227312.09, btcLoanRate: 4.79,
     btcCold: 5, btcCoinbase: 5, btcBasis: 521189.07,
     btcHoldings: 10, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
     stratPref: 10336, stratCash: 2250, stratEV: 60338,
@@ -689,7 +724,9 @@ async function fetchEquityPrices() {
     return true;
   }
   try {
-    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=MSTR,IBIT,STRC', {
+    const leapSyms = (state.settings.leaps || []).map(l => l.occ).filter(Boolean);
+    const symList = ['MSTR','IBIT','STRC', ...leapSyms].join(',');
+    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=' + encodeURIComponent(symList), {
       headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' }
     });
     const data = await res.json();
@@ -701,6 +738,14 @@ async function fetchEquityPrices() {
         if (sym === 'MSTR') { state.mstrPrev = q.prevclose; state.mstrPrice = price; }
         else if (sym === 'IBIT') { state.ibitPrev = q.prevclose; state.ibitPrice = price; }
         else if (sym === 'STRC') { state.strcPrice = price; }
+        else {
+          // LEAP option quote — match by occ symbol
+          const leap = (state.settings.leaps || []).find(l => l.occ === sym);
+          if (leap) {
+            state.leapPrices[String(leap.strike)] = price;
+            leap.prevPrice = q.prevclose;
+          }
+        }
       });
     }
     return true;
@@ -840,6 +885,13 @@ function calcPortfolioValue() {
   const mstrVal = uncappedShares * mstrLive + cappedValue;
   const ibitVal = s.ibitShares * state.ibitPrice;
   const strcVal = s.strcShares * state.strcPrice;
+  // LEAP values (option price × 100 × contracts)
+  const leaps = s.leaps || [];
+  const leapVals = leaps.map(l => {
+    const px = state.leapPrices[String(l.strike)] || 0;
+    return { strike: l.strike, contracts: l.contracts, basis: l.basis, delta: l.delta, price: px, value: px * 100 * l.contracts };
+  });
+  const leapVal = leapVals.reduce((s, l) => s + l.value, 0);
   const totalPremium = state.rolls.reduce((sum, r) => sum + (r.credit * r.contracts * 100), 0);
   const dcaTotal = state.dcaLog.reduce((sum, d) => sum + d.btcReceived, 0);
   const dcaSpent = state.dcaLog.reduce((sum, d) => sum + d.amount, 0);
@@ -847,9 +899,9 @@ function calcPortfolioValue() {
   const cashRemaining = s.cash + totalPremium - dcaSpent;
   const btcLoan = s.btcLoan || 0;
   const totalDebt = s.margin + btcLoan;
-  const brokerageAssets = mstrVal + ibitVal + strcVal + cashRemaining;
+  const brokerageAssets = mstrVal + ibitVal + strcVal + leapVal + cashRemaining;
   const totalAssets = brokerageAssets + btcVal;
-  return { mstrVal, ibitVal, strcVal, cashRemaining, btcVal, margin: s.margin, btcLoan, totalDebt, totalPremium,
+  return { mstrVal, ibitVal, strcVal, leapVal, leapVals, cashRemaining, btcVal, margin: s.margin, btcLoan, totalDebt, totalPremium,
     brokerageAssets, totalAssets, dcaTotal, dcaSpent, cappedShares,
     net: totalAssets - totalDebt };
 }
@@ -890,13 +942,18 @@ function updateTickers() {
   else if (mnav < 1.6) { mnavZone.textContent = 'EXPANDING'; mnavZone.className = 'ticker-change up'; }
   else { mnavZone.textContent = 'EUPHORIC'; mnavZone.className = 'ticker-change up'; }
 
-  const iv = estimateIV();
-  document.getElementById('iv-value').textContent = iv.toFixed(0) + '%';
-  const ivEnv = document.getElementById('iv-env');
-  if (iv > 90) { ivEnv.textContent = 'IV SPIKE'; ivEnv.className = 'ticker-change up'; }
-  else if (iv > 75) { ivEnv.textContent = 'ELEVATED'; ivEnv.className = 'ticker-change up'; }
-  else if (iv > 65) { ivEnv.textContent = 'NORMAL'; ivEnv.className = 'ticker-change neutral'; }
-  else { ivEnv.textContent = 'LOW'; ivEnv.className = 'ticker-change down'; }
+  // LEAP tickers
+  const pvForLeaps = calcPortfolioValue();
+  (pvForLeaps.leapVals || []).forEach(l => {
+    const valEl = document.getElementById('leap' + l.strike + '-value');
+    const plEl = document.getElementById('leap' + l.strike + '-pl');
+    if (!valEl || !plEl) return;
+    valEl.textContent = '$' + (Math.round(l.value / 100) / 10).toFixed(1) + 'K';
+    const pl = l.value - l.basis;
+    const plPct = l.basis > 0 ? (pl / l.basis * 100) : 0;
+    plEl.textContent = (pl >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(pl)).toLocaleString() + ' (' + (pl >= 0 ? '+' : '') + plPct.toFixed(1) + '%)';
+    plEl.className = 'ticker-change ' + (pl >= 0 ? 'up' : 'down');
+  });
 
   const pv = calcPortfolioValue();
   document.getElementById('margin-bal').textContent = '$' + Math.round(state.settings.margin).toLocaleString();
@@ -911,19 +968,25 @@ function updatePortfolio() {
   const pv = calcPortfolioValue();
   const s = state.settings;
 
-  // ── Brokerage: MSTR ──
-  const mstrPL = pv.mstrVal - s.mstrBasis;
-  document.getElementById('port-mstr').textContent = '$' + Math.round(pv.mstrVal).toLocaleString();
-  document.getElementById('port-mstr-basis').textContent = '$' + Math.round(s.mstrBasis).toLocaleString();
-  document.getElementById('port-mstr-pl').textContent = (mstrPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(mstrPL)).toLocaleString();
-  document.getElementById('port-mstr-pl').style.color = mstrPL >= 0 ? 'var(--green)' : 'var(--red)';
-
   // ── Brokerage: IBIT ──
   const ibitPL = pv.ibitVal - s.ibitBasis;
   document.getElementById('port-ibit').textContent = '$' + Math.round(pv.ibitVal).toLocaleString();
   document.getElementById('port-ibit-basis').textContent = '$' + Math.round(s.ibitBasis).toLocaleString();
   document.getElementById('port-ibit-pl').textContent = (ibitPL >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(ibitPL)).toLocaleString();
   document.getElementById('port-ibit-pl').style.color = ibitPL >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // ── Brokerage: LEAPs ──
+  (pv.leapVals || []).forEach(l => {
+    const valEl = document.getElementById('port-leap' + l.strike);
+    const basisEl = document.getElementById('port-leap' + l.strike + '-basis');
+    const plEl = document.getElementById('port-leap' + l.strike + '-pl');
+    if (!valEl) return;
+    valEl.textContent = '$' + Math.round(l.value).toLocaleString();
+    basisEl.textContent = '$' + Math.round(l.basis).toLocaleString();
+    const lpl = l.value - l.basis;
+    plEl.textContent = (lpl >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(lpl)).toLocaleString();
+    plEl.style.color = lpl >= 0 ? 'var(--green)' : 'var(--red)';
+  });
 
   // ── Brokerage: Margin, Cash, LTV ──
   document.getElementById('port-margin').textContent = '($' + Math.round(s.margin).toLocaleString() + ')';
@@ -980,12 +1043,14 @@ function updatePortfolio() {
   document.getElementById('port-combined-ltv').textContent = combinedLtv.toFixed(1) + '%';
   document.getElementById('port-combined-ltv').style.color = combinedLtv > 40 ? 'var(--red)' : combinedLtv > 30 ? 'var(--orange)' : 'var(--green)';
 
-  // Est. BTC Exposure: direct BTC + MSTR BTC (via mNAV) + IBIT BTC equivalent
+  // Est. BTC Exposure: direct BTC + MSTR shares + LEAP delta + IBIT BTC equivalent
   const mstrBtcPerShare = state.btcPrice > 0 ? (s.stratBtc / (s.stratShares * 1000)) : 0;
   const mstrBtcEquiv = s.shares * mstrBtcPerShare;
+  // LEAP delta exposure: contracts × 100 × delta × mstrBtcPerShare
+  const leapBtcEquiv = (pv.leapVals || []).reduce((sum, l) => sum + (l.contracts * 100 * l.delta * mstrBtcPerShare), 0);
   const ibitBtcEquiv = state.btcPrice > 0 ? pv.ibitVal / state.btcPrice : 0;
-  const totalBtcExposure = s.btcHoldings + mstrBtcEquiv + ibitBtcEquiv;
-  document.getElementById('port-btc-exposure').textContent = totalBtcExposure.toFixed(1) + ' BTC (~$' + Math.round(totalBtcExposure * state.btcPrice / 1000).toLocaleString() + 'K)';
+  const totalBtcExposure = s.btcHoldings + mstrBtcEquiv + leapBtcEquiv + ibitBtcEquiv;
+  document.getElementById('port-btc-exposure').textContent = totalBtcExposure.toFixed(2) + ' BTC (~$' + Math.round(totalBtcExposure * state.btcPrice / 1000).toLocaleString() + 'K)';
 
   document.getElementById('port-total').textContent = '$' + Math.round(pv.net).toLocaleString();
   document.getElementById('net-hero-value').textContent = '$' + Math.round(pv.net).toLocaleString();
@@ -1357,10 +1422,17 @@ function recordDailySnapshot() {
 function openSettings() {
   const s = state.settings;
   document.getElementById('tradier-token').value = s.tradierToken || '';
-  document.getElementById('setting-shares').value = s.shares;
-  document.getElementById('setting-mstr-basis').value = s.mstrBasis;
   document.getElementById('setting-ibit-shares').value = s.ibitShares;
   document.getElementById('setting-ibit-basis').value = s.ibitBasis;
+  // LEAPs
+  const leap170 = (s.leaps || []).find(l => l.strike === 170) || {};
+  const leap200 = (s.leaps || []).find(l => l.strike === 200) || {};
+  document.getElementById('setting-leap170-contracts').value = leap170.contracts || 0;
+  document.getElementById('setting-leap170-basis').value = leap170.basis || 0;
+  document.getElementById('setting-leap170-delta').value = leap170.delta || 0;
+  document.getElementById('setting-leap200-contracts').value = leap200.contracts || 0;
+  document.getElementById('setting-leap200-basis').value = leap200.basis || 0;
+  document.getElementById('setting-leap200-delta').value = leap200.delta || 0;
   document.getElementById('setting-strf-shares').value = s.strcShares;
   document.getElementById('setting-strf-basis').value = s.strcBasis;
   document.getElementById('setting-margin').value = s.margin;
@@ -1379,10 +1451,19 @@ function openSettings() {
 
 function saveSettings() {
   state.settings.tradierToken = document.getElementById('tradier-token').value;
-  state.settings.shares = parseInt(document.getElementById('setting-shares').value);
-  state.settings.mstrBasis = parseFloat(document.getElementById('setting-mstr-basis').value);
   state.settings.ibitShares = parseInt(document.getElementById('setting-ibit-shares').value);
   state.settings.ibitBasis = parseFloat(document.getElementById('setting-ibit-basis').value);
+  // LEAPs
+  state.settings.leaps = state.settings.leaps || [];
+  const setLeap = (strike, expiry, occ) => {
+    let leap = state.settings.leaps.find(l => l.strike === strike);
+    if (!leap) { leap = { strike, expiry, occ }; state.settings.leaps.push(leap); }
+    leap.contracts = parseInt(document.getElementById('setting-leap' + strike + '-contracts').value);
+    leap.basis = parseFloat(document.getElementById('setting-leap' + strike + '-basis').value);
+    leap.delta = parseFloat(document.getElementById('setting-leap' + strike + '-delta').value);
+  };
+  setLeap(170, '2028-12-15', 'MSTR281215C00170000');
+  setLeap(200, '2028-12-15', 'MSTR281215C00200000');
   state.settings.strcShares = parseInt(document.getElementById('setting-strf-shares').value);
   state.settings.strcBasis = parseFloat(document.getElementById('setting-strf-basis').value);
   state.settings.margin = parseFloat(document.getElementById('setting-margin').value);
