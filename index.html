@@ -457,7 +457,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
           <thead>
             <tr>
               <th style="border-bottom:2px solid var(--rust);min-width:70px"></th>
-              <th id="spt-h" colspan="23" style="border-bottom:2px solid var(--rust);font-size:9px;letter-spacing:0.15em;text-align:center">PROJECTED PRICES BY MONTH</th>
+              <th id="spt-h" colspan="23" style="border-bottom:2px solid var(--rust);font-size:9px;letter-spacing:0.15em;text-align:center">PROJECTED PRICES BY MONTH<span style="color:var(--text3);font-weight:400;margin-left:8px">— LEAPs at 1.25 mNAV intrinsic</span></th>
             </tr>
           </thead>
           <tbody id="scenarioPriceBody"></tbody>
@@ -1298,6 +1298,21 @@ function initCharts() {
   const totalDebt = s.margin + s.btcLoan;
   const fixedAssets = s.strcShares * 100 + s.cash - totalDebt;
 
+  // LEAP projection assumes 1.25 mNAV (intrinsic value at projected MSTR)
+  const PROJ_MNAV = 1.25;
+  const btcPerMstrShare = s.stratShares > 0 ? (s.stratBtc / (s.stratShares * 1000)) : 0;
+  const leaps = s.leaps || [];
+
+  function projMstrAt125(btcK) {
+    return PROJ_MNAV * (btcK * 1000) * btcPerMstrShare;
+  }
+  function projLeapValue(strike, btcK) {
+    const leap = leaps.find(l => l.strike === strike);
+    if (!leap) return 0;
+    const mstrProj = projMstrAt125(btcK);
+    return Math.max(0, mstrProj - strike) * 100 * leap.contracts;
+  }
+
   function calcScenario(btcArr, mstrArr) {
     return btcArr.map((btcK, i) => {
       const btcPrice = btcK * 1000;
@@ -1306,7 +1321,9 @@ function initCharts() {
       const mstrVal = s.shares * mstrPrice;
       const ibitVal = s.ibitShares * ibitPrice;
       const btcVal = s.btcHoldings * btcPrice;
-      return Math.round((mstrVal + ibitVal + btcVal + fixedAssets) / 1000);
+      // LEAP intrinsic value at projected MSTR (1.25 mNAV)
+      const leapVal = leaps.reduce((sum, l) => sum + Math.max(0, projMstrAt125(btcK) - l.strike) * 100 * l.contracts, 0);
+      return Math.round((mstrVal + ibitVal + btcVal + leapVal + fixedAssets) / 1000);
     });
   }
 
@@ -1377,13 +1394,28 @@ function initCharts() {
   headerRow += '</tr>';
   tbody.innerHTML = headerRow;
 
+  // LEAP projections per scenario (intrinsic value at 1.25 mNAV)
+  const leapFmt = v => v == null ? '—' : (v >= 1000 ? '$' + Math.round(v/1000) + 'K' : (v > 0 ? '$' + Math.round(v/100)/10 + 'K' : '$0'));
+  const s1Leap170 = s1Btc.map(b => b ? projLeapValue(170, b) : null);
+  const s1Leap200 = s1Btc.map(b => b ? projLeapValue(200, b) : null);
+  const s2Leap170 = s2Btc.map(b => b ? projLeapValue(170, b) : null);
+  const s2Leap200 = s2Btc.map(b => b ? projLeapValue(200, b) : null);
+  const s3Leap170 = s3Btc.map(b => b ? projLeapValue(170, b) : null);
+  const s3Leap200 = s3Btc.map(b => b ? projLeapValue(200, b) : null);
+
   const rows = [
     { label: 'S1 BTC', data: s1Btc, color: '#7B9464', fmt: v => v ? '$'+v+'K' : '—' },
     { label: 'S1 MSTR', data: s1Mstr, color: '#7B9464', fmt: v => v ? '$'+v : '—' },
+    { label: 'S1 $170 LEAP', data: s1Leap170, color: '#A8C490', fmt: leapFmt },
+    { label: 'S1 $200 LEAP', data: s1Leap200, color: '#A8C490', fmt: leapFmt },
     { label: 'S2 BTC', data: s2Btc, color: '#EF4444', fmt: v => v ? '$'+v+'K' : '—' },
     { label: 'S2 MSTR', data: s2Mstr, color: '#EF4444', fmt: v => v ? '$'+v : '—' },
+    { label: 'S2 $170 LEAP', data: s2Leap170, color: '#F88787', fmt: leapFmt },
+    { label: 'S2 $200 LEAP', data: s2Leap200, color: '#F88787', fmt: leapFmt },
     { label: 'S3 BTC', data: s3Btc, color: '#8B5CF6', fmt: v => v ? '$'+v+'K' : '—' },
     { label: 'S3 MSTR', data: s3Mstr, color: '#8B5CF6', fmt: v => v ? '$'+v : '—' },
+    { label: 'S3 $170 LEAP', data: s3Leap170, color: '#B69EF5', fmt: leapFmt },
+    { label: 'S3 $200 LEAP', data: s3Leap200, color: '#B69EF5', fmt: leapFmt },
   ];
   rows.forEach(r => {
     let tr = `<tr><td style="font-weight:700;color:${r.color};white-space:nowrap;padding:3px 8px 3px 0;font-size:10px">${r.label}</td>`;
