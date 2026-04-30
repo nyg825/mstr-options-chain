@@ -457,7 +457,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
           <thead>
             <tr>
               <th style="border-bottom:2px solid var(--rust);min-width:70px"></th>
-              <th id="spt-h" colspan="23" style="border-bottom:2px solid var(--rust);font-size:9px;letter-spacing:0.15em;text-align:center">PROJECTED PRICES BY MONTH<span style="color:var(--text3);font-weight:400;margin-left:8px">— LEAPs at 1.25 mNAV intrinsic</span></th>
+              <th id="spt-h" colspan="23" style="border-bottom:2px solid var(--rust);font-size:9px;letter-spacing:0.15em;text-align:center">PROJECTED PRICES BY MONTH<span style="color:var(--text3);font-weight:400;margin-left:8px">— LEAPs at 1.25 mNAV intrinsic, MSTR BTC growing linearly to 2× by Dec '28 expiry</span></th>
             </tr>
           </thead>
           <tbody id="scenarioPriceBody"></tbody>
@@ -1299,17 +1299,26 @@ function initCharts() {
   const fixedAssets = s.strcShares * 100 + s.cash - totalDebt;
 
   // LEAP projection assumes 1.25 mNAV (intrinsic value at projected MSTR)
+  // Strategy is assumed to double its BTC holdings by LEAP expiry (Dec 2028, ~32 months from Apr 2026)
   const PROJ_MNAV = 1.25;
-  const btcPerMstrShare = s.stratShares > 0 ? (s.stratBtc / (s.stratShares * 1000)) : 0;
+  const MONTHS_TO_EXPIRY = 32; // Apr 2026 → Dec 2028
+  const baseStratBtc = s.stratBtc;
   const leaps = s.leaps || [];
 
-  function projMstrAt125(btcK) {
-    return PROJ_MNAV * (btcK * 1000) * btcPerMstrShare;
+  // Linearly grow stratBtc from base toward 2× by LEAP expiry, capped at 2×
+  function stratBtcAt(i) {
+    const monthsFromNow = Math.max(0, i - NOW_IDX);
+    const frac = Math.min(1, monthsFromNow / MONTHS_TO_EXPIRY);
+    return baseStratBtc * (1 + frac);
   }
-  function projLeapValue(strike, btcK) {
+  function projMstrAt125(btcK, i) {
+    const btcPerShare = s.stratShares > 0 ? (stratBtcAt(i) / (s.stratShares * 1000)) : 0;
+    return PROJ_MNAV * (btcK * 1000) * btcPerShare;
+  }
+  function projLeapValue(strike, btcK, i) {
     const leap = leaps.find(l => l.strike === strike);
     if (!leap) return 0;
-    const mstrProj = projMstrAt125(btcK);
+    const mstrProj = projMstrAt125(btcK, i);
     return Math.max(0, mstrProj - strike) * 100 * leap.contracts;
   }
 
@@ -1321,8 +1330,8 @@ function initCharts() {
       const mstrVal = s.shares * mstrPrice;
       const ibitVal = s.ibitShares * ibitPrice;
       const btcVal = s.btcHoldings * btcPrice;
-      // LEAP intrinsic value at projected MSTR (1.25 mNAV)
-      const leapVal = leaps.reduce((sum, l) => sum + Math.max(0, projMstrAt125(btcK) - l.strike) * 100 * l.contracts, 0);
+      // LEAP intrinsic at projected MSTR (1.25 mNAV, growing stratBtc)
+      const leapVal = leaps.reduce((sum, l) => sum + Math.max(0, projMstrAt125(btcK, i) - l.strike) * 100 * l.contracts, 0);
       return Math.round((mstrVal + ibitVal + btcVal + leapVal + fixedAssets) / 1000);
     });
   }
@@ -1396,12 +1405,12 @@ function initCharts() {
 
   // LEAP projections per scenario (intrinsic value at 1.25 mNAV)
   const leapFmt = v => v == null ? '—' : (v >= 1000 ? '$' + Math.round(v/1000) + 'K' : (v > 0 ? '$' + Math.round(v/100)/10 + 'K' : '$0'));
-  const s1Leap170 = s1Btc.map(b => b ? projLeapValue(170, b) : null);
-  const s1Leap200 = s1Btc.map(b => b ? projLeapValue(200, b) : null);
-  const s2Leap170 = s2Btc.map(b => b ? projLeapValue(170, b) : null);
-  const s2Leap200 = s2Btc.map(b => b ? projLeapValue(200, b) : null);
-  const s3Leap170 = s3Btc.map(b => b ? projLeapValue(170, b) : null);
-  const s3Leap200 = s3Btc.map(b => b ? projLeapValue(200, b) : null);
+  const s1Leap170 = s1Btc.map((b, i) => b ? projLeapValue(170, b, i) : null);
+  const s1Leap200 = s1Btc.map((b, i) => b ? projLeapValue(200, b, i) : null);
+  const s2Leap170 = s2Btc.map((b, i) => b ? projLeapValue(170, b, i) : null);
+  const s2Leap200 = s2Btc.map((b, i) => b ? projLeapValue(200, b, i) : null);
+  const s3Leap170 = s3Btc.map((b, i) => b ? projLeapValue(170, b, i) : null);
+  const s3Leap200 = s3Btc.map((b, i) => b ? projLeapValue(200, b, i) : null);
 
   const rows = [
     { label: 'S1 BTC', data: s1Btc, color: '#7B9464', fmt: v => v ? '$'+v+'K' : '—' },
