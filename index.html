@@ -323,7 +323,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">$200 LEAP (5 ct)</div><div class="metric-value" id="port-leap200">--</div></div>
         <div class="metric"><div class="metric-label">$200 LEAP Basis</div><div class="metric-value" id="port-leap200-basis">--</div></div>
         <div class="metric"><div class="metric-label">$200 LEAP P&L</div><div class="metric-value" id="port-leap200-pl">--</div></div>
-        <div class="metric"><div class="metric-label">Margin Loan (4.75%)</div><div class="metric-value down" id="port-margin">--</div></div>
+        <div class="metric"><div class="metric-label">Margin Loan (4.5%)</div><div class="metric-value down" id="port-margin">--</div></div>
         <div class="metric"><div class="metric-label">Cash</div><div class="metric-value" id="port-cash">--</div></div>
         <div class="metric"><div class="metric-label">Brokerage LTV</div><div class="metric-value" id="port-brok-ltv">--</div></div>
       </div>
@@ -834,8 +834,8 @@ function calcGrossMnav() {
 }
 
 function calcMarginInterest() {
-  // Flat 4.75% on margin loan balance (Morpho accrues separately, not shown here)
-  const annual = state.settings.margin * 0.0475;
+  // Flat 4.50% on margin loan balance (Morpho accrues separately, not shown here)
+  const annual = state.settings.margin * 0.045;
   return { annual: Math.round(annual), monthly: Math.round(annual / 12), daily: Math.round(annual / 365) };
 }
 
