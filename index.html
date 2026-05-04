@@ -474,9 +474,16 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h2>Settings & Configuration</h2>
+    <div style="margin-bottom:8px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:11px;color:var(--orange);line-height:1.4">
+      <strong>Public.com API.</strong> Your secret is stored in this browser only (localStorage) and never committed. The secret has trading permissions — keep this device secure and rotate the secret if exposed. Account ID is auto-discovered after first save.
+    </div>
     <div class="input-group" style="margin-bottom:12px">
-      <label>Tradier API Token</label>
-      <input type="text" id="tradier-token" placeholder="Enter your Tradier API token">
+      <label>Public.com Secret</label>
+      <input type="password" id="public-secret" placeholder="Paste your Public.com personal access token (secret)" autocomplete="off">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>Public.com Account ID (auto-filled)</label>
+      <input type="text" id="public-account-id" placeholder="Auto-discovered after save">
     </div>
     <div style="margin-bottom:12px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
       <span style="font-size:11px;color:var(--btc);font-family:var(--font-data);text-transform:uppercase;letter-spacing:1px">Brokerage Account</span>
@@ -632,8 +639,10 @@ let state = {
   btcPrice: 0, mstrPrice: 0, ibitPrice: 0, strcPrice: 0, btcChange24h: 0, mstrPrev: 0, ibitPrev: 0,
   liveOptions: {},
   leapPrices: { '170': 0, '200': 0 },
+  publicAuth: { accessToken: null, expiresAt: 0 },
   settings: {
-    tradierToken: 'NmVn72M4E7bi6xCUiS95uKn88Jrs',
+    publicSecret: '',
+    publicAccountId: '',
     shares: 0, mstrBasis: 0,
     ibitShares: 8802, ibitBasis: 338990.33,
     strcShares: 0, strcBasis: 0, strcDivRate: 11.50, strcPar: 100,
@@ -676,11 +685,24 @@ let state = {
   ]
 };
 
-// No localStorage caching — state comes from HTML defaults on every load
+// localStorage holds only the Public.com secret + account ID (per-device).
+// Quote data and portfolio numbers come from HTML defaults on every load.
 function loadState() {
-  // Clear any old cached data
   localStorage.removeItem('mstr-options-desk');
   localStorage.removeItem('mstr-options-desk-version');
+  try {
+    const secret = localStorage.getItem('public-secret');
+    const acctId = localStorage.getItem('public-account-id');
+    if (secret) state.settings.publicSecret = secret;
+    if (acctId) state.settings.publicAccountId = acctId;
+  } catch (e) {}
+}
+function persistPublicCreds() {
+  try {
+    if (state.settings.publicSecret) localStorage.setItem('public-secret', state.settings.publicSecret);
+    else localStorage.removeItem('public-secret');
+    if (state.settings.publicAccountId) localStorage.setItem('public-account-id', state.settings.publicAccountId);
+  } catch (e) {}
 }
 
 function saveState() {
@@ -719,52 +741,106 @@ async function fetchBtcPrice() {
   return false;
 }
 
+// ── Public.com auth: exchange secret for short-lived access token ──
+async function publicEnsureAccessToken() {
+  const secret = state.settings.publicSecret;
+  if (!secret) throw new Error('No Public.com secret configured (Settings)');
+  const now = Date.now();
+  if (state.publicAuth.accessToken && state.publicAuth.expiresAt > now + 60_000) {
+    return state.publicAuth.accessToken;
+  }
+  const r = await fetch('https://api.public.com/userapiauthservice/personal/access-tokens', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ validityInMinutes: 60, secret })
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error('Public token exchange failed (' + r.status + '): ' + txt.slice(0, 200));
+  }
+  const data = await r.json();
+  state.publicAuth.accessToken = data.accessToken;
+  state.publicAuth.expiresAt = now + 55 * 60 * 1000;
+  return state.publicAuth.accessToken;
+}
+
+async function publicEnsureAccountId() {
+  if (state.settings.publicAccountId) return state.settings.publicAccountId;
+  const tok = await publicEnsureAccessToken();
+  // Try common shapes for the accounts endpoint
+  const r = await fetch('https://api.public.com/userapigateway/trading/account', {
+    headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/json' }
+  });
+  if (!r.ok) throw new Error('Public account fetch failed: ' + r.status);
+  const d = await r.json();
+  const acctId = d.accountId || d.id || (d.accounts && d.accounts[0] && (d.accounts[0].accountId || d.accounts[0].id));
+  if (!acctId) throw new Error('Could not determine Public account ID from response');
+  state.settings.publicAccountId = acctId;
+  persistPublicCreds();
+  return acctId;
+}
+
 async function fetchEquityPrices() {
-  if (!state.settings.tradierToken) {
-    const ratio = 126 / 66000;
-    state.mstrPrice = Math.round(state.btcPrice * ratio * 100) / 100;
-    return true;
+  if (!state.settings.publicSecret) {
+    // No creds — leave prices as-is (will show "--"), and derive a rough MSTR fallback from BTC
+    if (state.btcPrice > 0 && !state.mstrPrice) {
+      state.mstrPrice = Math.round(state.btcPrice * (126 / 66000) * 100) / 100;
+    }
+    return false;
   }
   try {
-    const leapSyms = (state.settings.leaps || []).map(l => l.occ).filter(Boolean);
-    const symList = ['MSTR','IBIT','STRC', ...leapSyms].join(',');
-    const res = await fetch('https://api.tradier.com/v1/markets/quotes?symbols=' + encodeURIComponent(symList), {
-      headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' }
+    const [tok, acctId] = await Promise.all([publicEnsureAccessToken(), publicEnsureAccountId()]);
+    const leaps = state.settings.leaps || [];
+    const instruments = [
+      { symbol: 'MSTR', type: 'EQUITY' },
+      { symbol: 'IBIT', type: 'EQUITY' },
+      ...leaps.map(l => ({ symbol: l.occ, type: 'OPTION' }))
+    ];
+    const r = await fetch('https://api.public.com/userapigateway/marketdata/' + encodeURIComponent(acctId) + '/quotes', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ instruments })
     });
-    const data = await res.json();
-    if (data.quotes && data.quotes.quote) {
-      const quotes = Array.isArray(data.quotes.quote) ? data.quotes.quote : [data.quotes.quote];
-      quotes.forEach(q => {
-        const sym = q.symbol;
-        const price = q.last || q.close;
-        if (sym === 'MSTR') { state.mstrPrev = q.prevclose; state.mstrPrice = price; }
-        else if (sym === 'IBIT') { state.ibitPrev = q.prevclose; state.ibitPrice = price; }
-        else if (sym === 'STRC') { state.strcPrice = price; }
-        else {
-          // LEAP option quote — match by occ symbol
-          const leap = (state.settings.leaps || []).find(l => l.occ === sym);
-          if (leap) {
-            state.leapPrices[String(leap.strike)] = price;
-            leap.prevPrice = q.prevclose;
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      throw new Error('Public quotes failed (' + r.status + '): ' + txt.slice(0, 300));
+    }
+    const data = await r.json();
+    (data.quotes || []).forEach(q => {
+      if (q.outcome && q.outcome !== 'SUCCESS') return;
+      const sym = q.instrument && q.instrument.symbol;
+      const last = parseFloat(q.last);
+      const prev = parseFloat(q.previousClose);
+      if (sym === 'MSTR') { state.mstrPrice = isFinite(last) ? last : state.mstrPrice; state.mstrPrev = isFinite(prev) ? prev : state.mstrPrev; }
+      else if (sym === 'IBIT') { state.ibitPrice = isFinite(last) ? last : state.ibitPrice; state.ibitPrev = isFinite(prev) ? prev : state.ibitPrev; }
+      else {
+        // Option quote — match by occ symbol
+        const leap = leaps.find(l => l.occ === sym);
+        if (leap) {
+          if (isFinite(last)) state.leapPrices[String(leap.strike)] = last;
+          if (isFinite(prev)) leap.prevPrice = prev;
+          const greeks = q.optionDetails && q.optionDetails.greeks;
+          if (greeks && greeks.delta != null) {
+            const d = parseFloat(greeks.delta);
+            if (isFinite(d)) leap.delta = d;
           }
         }
-      });
-    }
+      }
+    });
     return true;
   } catch(e) {
-    console.error('Equity fetch failed', e);
-    const ratio = 126 / 66000;
-    state.mstrPrice = Math.round(state.btcPrice * ratio * 100) / 100;
+    console.error('Public equity fetch failed:', e);
     return false;
   }
 }
 
 async function fetchOptionsChain(expiry) {
-  if (!state.settings.tradierToken) return false;
+  // Disabled: was Tradier-based; Public.com chain endpoint has different shape.
+  return false;
   try {
     const res = await fetch(
       `https://api.tradier.com/v1/markets/options/chains?symbol=MSTR&expiration=${expiry}&greeks=true`,
-      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+      { headers: { 'Authorization': 'Bearer ' + 'DISABLED', 'Accept': 'application/json' } }
     );
     const data = await res.json();
     if (data.options && data.options.option) {
@@ -1475,7 +1551,8 @@ function recordDailySnapshot() {
 // ============================================================
 function openSettings() {
   const s = state.settings;
-  document.getElementById('tradier-token').value = s.tradierToken || '';
+  document.getElementById('public-secret').value = s.publicSecret || '';
+  document.getElementById('public-account-id').value = s.publicAccountId || '';
   document.getElementById('setting-ibit-shares').value = s.ibitShares;
   document.getElementById('setting-ibit-basis').value = s.ibitBasis;
   // LEAPs
@@ -1504,7 +1581,15 @@ function openSettings() {
 }
 
 function saveSettings() {
-  state.settings.tradierToken = document.getElementById('tradier-token').value;
+  const newSecret = document.getElementById('public-secret').value.trim();
+  const newAcct = document.getElementById('public-account-id').value.trim();
+  // If secret changed, invalidate the cached access token
+  if (newSecret !== state.settings.publicSecret) {
+    state.publicAuth = { accessToken: null, expiresAt: 0 };
+  }
+  state.settings.publicSecret = newSecret;
+  state.settings.publicAccountId = newAcct;
+  persistPublicCreds();
   state.settings.ibitShares = parseInt(document.getElementById('setting-ibit-shares').value);
   state.settings.ibitBasis = parseFloat(document.getElementById('setting-ibit-basis').value);
   // LEAPs
@@ -1647,11 +1732,13 @@ const fmtOptK = v => (v != null && !isNaN(v)) ? parseInt(v).toLocaleString() : '
 const fmtOptPct = v => (v != null && !isNaN(v)) ? (parseFloat(v) * 100).toFixed(1) + '%' : '—';
 
 async function loadChainExpirations() {
-  if (!state.settings.tradierToken) return;
+  // Disabled: depended on Tradier expirations endpoint. Public.com chain
+  // endpoint has a different shape and needs separate wiring.
+  return;
   try {
     const res = await fetch(
       'https://api.tradier.com/v1/markets/options/expirations?symbol=MSTR&includeAllRoots=true',
-      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+      { headers: { 'Authorization': 'Bearer ' + 'DISABLED', 'Accept': 'application/json' } }
     );
     const data = await res.json();
     chainExpiries = (data.expirations && data.expirations.date) || [];
@@ -1687,20 +1774,20 @@ async function loadChainExpirations() {
 }
 
 async function loadFullChain() {
+  // Disabled until Public.com option-chain endpoint is wired up.
+  document.getElementById('chainWrap').innerHTML =
+    '<div class="chain-loading">Options chain panel is temporarily disabled — Tradier API removed; Public.com chain integration pending.</div>';
+  return;
   const expiry = document.getElementById('chainExpirySelect').value;
-  if (!expiry || !state.settings.tradierToken) {
-    document.getElementById('chainWrap').innerHTML =
-      '<div class="chain-loading">Set Tradier API token in Settings and select an expiration</div>';
-    return;
-  }
+  if (!expiry) return;
 
   document.getElementById('chainWrap').innerHTML =
-    '<div class="chain-loading"><span class="spin"></span> Fetching MSTR options chain from Tradier...</div>';
+    '<div class="chain-loading"><span class="spin"></span> Fetching MSTR options chain...</div>';
 
   try {
     const res = await fetch(
       `https://api.tradier.com/v1/markets/options/chains?symbol=MSTR&expiration=${expiry}&greeks=true`,
-      { headers: { 'Authorization': 'Bearer ' + state.settings.tradierToken, 'Accept': 'application/json' } }
+      { headers: { 'Authorization': 'Bearer ' + 'DISABLED', 'Accept': 'application/json' } }
     );
     const data = await res.json();
     const opts = (data.options && data.options.option) || [];
