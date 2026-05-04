@@ -749,7 +749,7 @@ async function publicEnsureAccessToken() {
   if (state.publicAuth.accessToken && state.publicAuth.expiresAt > now + 60_000) {
     return state.publicAuth.accessToken;
   }
-  const r = await fetch('https://api.public.com/userapiauthservice/personal/access-tokens', {
+  const r = await fetch('https://public-cors-proxy.cma-ad3.workers.dev/userapiauthservice/personal/access-tokens', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify({ validityInMinutes: 60, secret })
@@ -768,7 +768,7 @@ async function publicEnsureAccountId() {
   if (state.settings.publicAccountId) return state.settings.publicAccountId;
   const tok = await publicEnsureAccessToken();
   // Try common shapes for the accounts endpoint
-  const r = await fetch('https://api.public.com/userapigateway/trading/account', {
+  const r = await fetch('https://public-cors-proxy.cma-ad3.workers.dev/userapigateway/trading/account', {
     headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/json' }
   });
   if (!r.ok) throw new Error('Public account fetch failed: ' + r.status);
@@ -796,7 +796,7 @@ async function fetchEquityPrices() {
       { symbol: 'IBIT', type: 'EQUITY' },
       ...leaps.map(l => ({ symbol: l.occ, type: 'OPTION' }))
     ];
-    const r = await fetch('https://api.public.com/userapigateway/marketdata/' + encodeURIComponent(acctId) + '/quotes', {
+    const r = await fetch('https://public-cors-proxy.cma-ad3.workers.dev/userapigateway/marketdata/' + encodeURIComponent(acctId) + '/quotes', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ instruments })
