@@ -767,14 +767,17 @@ async function publicEnsureAccessToken() {
 async function publicEnsureAccountId() {
   if (state.settings.publicAccountId) return state.settings.publicAccountId;
   const tok = await publicEnsureAccessToken();
-  // Try common shapes for the accounts endpoint
   const r = await fetch('https://public-cors-proxy.cma-ad3.workers.dev/userapigateway/trading/account', {
     headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/json' }
   });
   if (!r.ok) throw new Error('Public account fetch failed: ' + r.status);
   const d = await r.json();
-  const acctId = d.accountId || d.id || (d.accounts && d.accounts[0] && (d.accounts[0].accountId || d.accounts[0].id));
-  if (!acctId) throw new Error('Could not determine Public account ID from response');
+  // Public returns { accounts: [{ accountId, accountType, ... }, ...] }
+  // Pick the BROKERAGE account (the one that holds equities & options)
+  const accounts = d.accounts || [];
+  const brokerage = accounts.find(a => a.accountType === 'BROKERAGE') || accounts[0];
+  const acctId = brokerage && (brokerage.accountId || brokerage.id);
+  if (!acctId) throw new Error('Could not find BROKERAGE account in Public response');
   state.settings.publicAccountId = acctId;
   persistPublicCreds();
   return acctId;
