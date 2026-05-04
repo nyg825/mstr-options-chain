@@ -335,7 +335,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
         <div class="metric"><div class="metric-label">Coinbase (5 BTC)</div><div class="metric-value" id="port-btc-cb">--</div></div>
         <div class="metric"><div class="metric-label">Basis ($<span id="port-btc-avg">--</span>/coin)</div><div class="metric-value" id="port-btc-basis">--</div></div>
         <div class="metric"><div class="metric-label">Unrealized P&L</div><div class="metric-value" id="port-btc-pl">--</div></div>
-        <div class="metric"><div class="metric-label">Morpho Loan (4.79%)</div><div class="metric-value down" id="port-btc-loan">--</div></div>
+        <div class="metric"><div class="metric-label">Morpho Loan (4.57%)</div><div class="metric-value down" id="port-btc-loan">--</div></div>
         <div class="metric"><div class="metric-label">Morpho LTV</div><div class="metric-value" id="port-morpho-ltv">--</div></div>
         <div class="metric"><div class="metric-label">BTC LTV (all 10)</div><div class="metric-value" id="port-btc-ltv-all">--</div></div>
       </div>
@@ -351,13 +351,26 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
       <div class="metric-grid">
         <div class="metric"><div class="metric-label">Equity %</div><div class="metric-value" id="margin-eq-pct">--</div></div>
         <div class="metric"><div class="metric-label">Excess</div><div class="metric-value" id="margin-excess">--</div></div>
-        <div class="metric"><div class="metric-label">Monthly Interest</div><div class="metric-value" id="margin-interest">--</div></div>
+        <div class="metric"><div class="metric-label">Margin Interest / mo</div><div class="metric-value" id="margin-interest">--</div></div>
       </div>
       <div style="margin-top:8px;display:flex;align-items:baseline;gap:8px">
         <span style="font-size:11px;color:var(--text3)">Margin call at:</span>
         <span style="font-family:var(--font-data);font-size:16px;font-weight:600" id="margin-call-price">--</span>
       </div>
       <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="margin-progress" style="width:80%;background:var(--green)"></div></div>
+
+      <!-- Morpho Loan Cost (BTC-collateralized loan; 100% interest accrual) -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--rust);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px">Morpho Loan — 100% Accrual</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Monthly Accrual</div><div class="metric-value down" id="morpho-monthly">--</div></div>
+          <div class="metric"><div class="metric-label">Annual Accrual</div><div class="metric-value down" id="morpho-annual">--</div></div>
+          <div class="metric"><div class="metric-label">Effective Rate</div><div class="metric-value" id="morpho-rate">--</div></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4">
+          Interest capitalizes onto the loan balance — no monthly cash payment due.
+        </div>
+      </div>
     </div>
 
     <!-- Panel 3: Active Positions -->
@@ -521,7 +534,7 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Margin Balance ($)</label>
-      <input type="number" id="setting-margin" value="120351.34" step="0.01">
+      <input type="number" id="setting-margin" value="119297.17" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Cash on Hand ($)</label>
@@ -544,11 +557,11 @@ button.danger:hover{background:var(--red);border-color:var(--red)}
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan ($)</label>
-      <input type="number" id="setting-btc-loan" value="227312.09" step="0.01">
+      <input type="number" id="setting-btc-loan" value="227612.21" step="0.01">
     </div>
     <div class="input-group" style="margin-bottom:12px">
       <label>Morpho Loan Rate (%)</label>
-      <input type="number" id="setting-btc-loan-rate" value="4.79" step="0.01">
+      <input type="number" id="setting-btc-loan-rate" value="4.57" step="0.01">
     </div>
     <div style="margin-bottom:12px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);margin-top:16px">
       <span style="font-size:11px;color:var(--btc);font-family:var(--font-data);text-transform:uppercase;letter-spacing:1px">Strategy.com Data</span>
@@ -632,12 +645,12 @@ let state = {
     shares: 0, mstrBasis: 0,
     ibitShares: 8802, ibitBasis: 338990.33,
     strcShares: 0, strcBasis: 0, strcDivRate: 11.50, strcPar: 100,
-    cash: 123595.63, margin: 120351.34,
+    cash: 123595.63, margin: 119297.17,
     leaps: [
       { strike: 170, expiry: '2028-12-15', contracts: 5, basis: 41864.32, delta: 0.703, occ: 'MSTR281215C00170000' },
       { strike: 200, expiry: '2028-12-15', contracts: 5, basis: 38499.31, delta: 0.577, occ: 'MSTR281215C00200000' }
     ],
-    btcLoan: 227312.09, btcLoanRate: 4.79,
+    btcLoan: 227612.21, btcLoanRate: 4.57,
     btcCold: 5, btcCoinbase: 5, btcBasis: 521189.07,
     btcHoldings: 10, stratBtc: 766970, stratShares: 345590, stratDebt: 8254,
     stratPref: 10336, stratCash: 2250, stratEV: 60338,
@@ -1185,6 +1198,14 @@ function updateMarginSafety() {
   document.getElementById('margin-excess').style.color = excess > 50000 ? 'var(--green)' : excess > 0 ? 'var(--orange)' : 'var(--red)';
   document.getElementById('margin-interest').textContent = '$' + interest.monthly.toLocaleString() + '/mo';
   document.getElementById('margin-interest').style.color = 'var(--orange)';
+
+  // Morpho monthly accrual (100% interest accrual — capitalizes onto loan balance)
+  const morphoRate = (state.settings.btcLoanRate || 0) / 100;
+  const morphoAnnual = (state.settings.btcLoan || 0) * morphoRate;
+  const morphoMonthly = morphoAnnual / 12;
+  document.getElementById('morpho-monthly').textContent = '$' + Math.round(morphoMonthly).toLocaleString() + '/mo';
+  document.getElementById('morpho-annual').textContent = '$' + Math.round(morphoAnnual).toLocaleString() + '/yr';
+  document.getElementById('morpho-rate').textContent = (state.settings.btcLoanRate || 0).toFixed(2) + '%';
 
   if (callPrice <= 0) {
     document.getElementById('margin-call-price').textContent = 'N/A — fully covered';
